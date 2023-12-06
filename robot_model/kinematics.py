@@ -13,11 +13,11 @@ class Kinematics:
         ])
         return T
 
-    def forward_kinematics(self, dh_parameters):
-
+    def forward_kinematics(self):
+        a, alpha, d, theta = self.dh_parameters
         T = np.eye(4)
-        for i, (a, alpha, d, theta) in enumerate(self.dh_params):
-            T = np.dot(T, self.dh_matrix(a, alpha, d, q[i]))
+        for (a, alpha, d, theta) in enumerate(self.dh_params):
+            T = np.dot(T, self.transformation_matrix(a, alpha, d, theta))
         x, y, z = T[0, 3], T[1, 3], T[2, 3]
         return x, y, z
 
@@ -25,13 +25,13 @@ class Kinematics:
         q = []
         return q
     
-    
+
 q = [0, 0, 0, 0]
 dh_parameters = [[0, 0, 0, 0],
                  [0, 0, 0, 0],
                  [0, 0, 0, 0]]    
 kinematics = Kinematics(dh_parameters)
-print(kinematics.forward_kinematics(q))
+print(kinematics.forward_kinematics())
 
 x, y, z = 10, 0, 5 
 print(kinematics.inverse_kinematics(x, y, z))
