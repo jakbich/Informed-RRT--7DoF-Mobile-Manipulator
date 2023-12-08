@@ -1,77 +1,14 @@
-import warnings
 import gymnasium as gym
+import warnings
 import numpy as np
+import argparse
 import pybullet as p
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from mpscenes.obstacles.collision_obstacle import CollisionObstacle
 
+from environments import fill_env_with_obstacles
 
-
-
-"""
-TEST TO ADD A BOX OBSTACLE ONLY BASED ON WHAT IS FOUND IN 
-/home/jakob/anaconda3/envs/PDM/lib/python3.8/site-packages/mpscenes/obstacles
-"""
-
-from mpscenes.obstacles.box_obstacle import BoxObstacle
-box_obs = []
-box_obs.append(BoxObstacle(name='box_obstacle', content_dict={'type': 'box', 'movable': False, 'geometry': {'position': [0, -1.0, 0.0], 'length': 20.0, 'width': .2, 'height': 1}}, ))
-box_obs.append(BoxObstacle(name='box_obstacle', content_dict={'type': 'box', 'movable': False, 'geometry': {'position': [0, 1.0, 0.0], 'length': 10.0, 'width': .2, 'height': 1}}))
-"""
-END OF TEST TO ADD A BOX OBSTACLE ONLY BASED ON WHAT IS FOUND IN 
-/home/jakob/anaconda3/envs/PDM/lib/python3.8/site-packages/mpscenes/obstacles
-"""
-
-
-def add_sphere(env, pos, radius):
-    sphere_obst_dict = {
-        "type": "sphere",
-        'movable': False,
-        "geometry": {"position": pos, "radius": radius},
-    }
-    from mpscenes.obstacles.sphere_obstacle import SphereObstacle
-    sphere_obst = SphereObstacle(name=f'obstacle_{pos[0]}_{pos[1]}_{pos[2]}', content_dict=sphere_obst_dict)
-    env.add_obstacle(sphere_obst)
-
-
-def add_wall(env, begin_pos, end_pos, horizontal=True, radius=0.5):
-    if horizontal:
-        assert begin_pos[1] == end_pos[1]
-    else:
-        assert begin_pos[0] == end_pos[0]
-
-    if horizontal:
-        n_spheres = abs(np.round((end_pos[0] - begin_pos[0]) / (radius * 2)).astype(int))
-    else:
-        n_spheres = abs(np.round((end_pos[1] - begin_pos[1]) / (radius * 2)).astype(int))
-
-    # add obstacles
-    for i in range(n_spheres):
-        if horizontal:
-            add_sphere(env, [begin_pos[0] + i, begin_pos[1], 0.0], radius)
-        else:
-            add_sphere(env, [begin_pos[0], begin_pos[1] + i, 0.0], radius)
-
-    # add covering wall
-    height = radius
-    if horizontal:
-        width = n_spheres - (radius * 2)
-        length = radius * 2
-        pos = [[(begin_pos[0] + end_pos[0]) / 2 - radius, (begin_pos[1] + end_pos[1]) / 2, 0]]
-    else:
-        width = radius * 2
-        length = n_spheres - (radius * 2)
-        pos = [[(begin_pos[0] + end_pos[0]) / 2, (begin_pos[1] + end_pos[1]) / 2 - radius, 0]]
-
-    size = [width, length, height]
-
-
-
-
-
-
-def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
+def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type='empty'):
     robots = [
         GenericDiffDriveRobot(
             urdf="albert.urdf",
@@ -79,8 +16,8 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
             actuated_wheels=["wheel_right_joint", "wheel_left_joint"],
             castor_wheels=["rotacastor_right_joint", "rotacastor_left_joint"],
             wheel_radius = 0.08,
-            wheel_distance = 0.494,
-            spawn_rotation = 90,
+            wheel_distance = 0.494, 
+            spawn_rotation = 0,       # in degrees
             facing_direction = '-y',
         ),
     ]
@@ -89,11 +26,9 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
         dt=0.01, robots=robots, render=render
     )
 
-   # add_wall(env, [1, 2], [5, 2])
 
-    for box_ob in box_obs:
-        env.add_obstacle(box_ob)
-
+    # Fill the environment with obstacles, argument passed to determine which one (empty, easy, hard):
+    fill_env_with_obstacles(env, env_type)
 
     action = np.zeros(env.n())
     action[0] = 0.2
@@ -116,7 +51,13 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
 
 if __name__ == "__main__":
     show_warnings = False
+
+    parser = argparse.ArgumentParser(description='Fill environment with obstacles.')
+    parser.add_argument('--env_type', type=str, help='Type of the environment to create', default='empty')
+    args = parser.parse_args()
+    env_type = args.env_type
+
     warning_flag = "default" if show_warnings else "ignore"
     with warnings.catch_warnings():
         warnings.filterwarnings(warning_flag)
-        run_albert(render=True)
+        run_albert(render=True, env_type=env_type)
