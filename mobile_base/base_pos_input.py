@@ -1,51 +1,55 @@
 import gymnasium as gym
-import numpy as np
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
+import numpy as np
+import time
 
-def run_point_robot_to_targets(targets, n_steps=1000, render=False, constant_velocity=0.1, tolerance=1.0):
-    # Create the point robot
-    robot = GenericUrdfReacher(urdf="pointRobot.urdf", mode="vel")
+from urdfenvs.scene_examples.obstacles import *
+from urdfenvs.scene_examples.goal import *
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
 
-    # Create the environment
-    env = gym.make("urdf-env-v0", dt=0.01, robots=[robot], render=render)
+def run_point_robot(n_steps=10000, render=False, goal=True, obstacles=True):
+    robots = [
+        GenericUrdfReacher(urdf="pointRobot.urdf", mode="vel"),
+    ]
+    env: UrdfEnv = gym.make(
+        "urdf-env-v0",
+        dt=0.01, robots=robots, render=render
+    )
+    # Define a list of actions
+    actions = [
+        np.array([1, 1, 0.0]),
+        np.array([0, -1, 0.0]),
+        np.array([-1, 0, 0.0]),
+        # Add more actions as needed
+    ]
+    pos0 = np.array([0., 0., 0.])
+    vel0 = np.array([0., 0., 0.])
+    ob = env.reset(pos=pos0, vel=vel0)
+    print(f"Initial observation : {ob}")
 
-    # Set the initial robot position and velocity
-    initial_position = np.array([1.0, 0.1, 0.0])
-    initial_velocity = np.array([1.0, 0.0, 0.0])
-    ob = env.reset(pos=initial_position, vel=initial_velocity)
+    history = []
+    env.reconfigure_camera(2.0, 0.0, -90.01, (0, 0, 0))
 
-    # Print initial observation
-    print(f"Initial observation: {ob}")
+    current_action_index = 0
+    action_switch_interval = 2  # Time in seconds to switch actions
+    last_switch_time = time.time()  # Record the start time
 
-    for target_position in targets:
-        for _ in range(n_steps):
-            # Get the first key-value pair in the observation dictionary
-            robot_key, robot_observation = next(iter(ob[0].items()))
+    for _ in range(n_steps):
+        current_time = time.time()
+        if current_time - last_switch_time >= action_switch_interval:
+            # Switch action every 2 seconds
+            current_action_index = (current_action_index + 1) % len(actions)
+            last_switch_time = current_time
 
-            # Ensure the key is what we expect it to be
-            if robot_key == 'robot_0':
-                robot_position = robot_observation['joint_state']['position'][:3]
-                direction = target_position - robot_position
-                distance = np.linalg.norm(direction)
-                if distance < 0.1:  # Assuming a small threshold for reaching the target
-                    break
-
-                direction /= np.linalg.norm(direction)
-
-                # Apply constant velocity in the direction of the target
-                action = direction * constant_velocity
-
-                ob, _, terminated, _, info = env.step(action)
-
-                if terminated:
-                    print(info)
-                    break
-
+        action = actions[current_action_index]
+        ob, _, terminated, _, info = env.step(action)
+        if terminated:
+            print(info)
+            break
+        history.append(ob)
     env.close()
+    return history
+
 
 if __name__ == "__main__":
-    # Define the target positions (x, y, z)
-    targets = [np.array([200.0, 0.0, 0.0]), np.array([0.0, 200.0, 0.0])]
-
-    # Run the point robot to the target positions
-    run_point_robot_to_targets(targets, render=True)
+    run_point_robot(render=True)
