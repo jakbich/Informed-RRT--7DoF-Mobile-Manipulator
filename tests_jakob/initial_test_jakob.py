@@ -6,9 +6,9 @@ import pybullet as p
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 
-from environments import fill_env_with_obstacles
+from create_environments import fill_env_with_obstacles
 
-def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type='empty'):
+def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type='empty', sphere_density=1.0):
     robots = [
         GenericDiffDriveRobot(
             urdf="albert.urdf",
@@ -28,7 +28,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type=
 
 
     # Fill the environment with obstacles, argument passed to determine which one (empty, easy, hard):
-    fill_env_with_obstacles(env, env_type)
+    fill_env_with_obstacles(env, env_type, sphere_density)
 
     action = np.zeros(env.n())
     action[0] = 0.2
@@ -54,10 +54,12 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Fill environment with obstacles.')
     parser.add_argument('--env_type', type=str, help='Type of the environment to create', default='empty')
+    parser.add_argument('--sphere_density', type=float, help='sphere_density to make spheres overlap', default=1.0)
     args = parser.parse_args()
     env_type = args.env_type
+    sphere_density = args.sphere_density
 
     warning_flag = "default" if show_warnings else "ignore"
     with warnings.catch_warnings():
         warnings.filterwarnings(warning_flag)
-        run_albert(render=True, env_type=env_type)
+        run_albert(render=True, env_type=env_type, sphere_density=sphere_density)

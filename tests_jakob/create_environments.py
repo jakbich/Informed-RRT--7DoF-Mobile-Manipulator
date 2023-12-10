@@ -8,11 +8,10 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.obstacles.box_obstacle import BoxObstacle
 
 
-def fill_env_with_obstacles(env, obstacle_setup):
+def fill_env_with_obstacles(env, obstacle_setup, density=1):
 
     if obstacle_setup == 'empty':
         pass
-
 
     if obstacle_setup == 'easy':
 
@@ -20,14 +19,14 @@ def fill_env_with_obstacles(env, obstacle_setup):
         
         # Wall specifications [position, length, width, height]
         walls = [
-            [[0, -1.0, 0.0], 5.0, 0.4, 2],
-            [[0, 1.0, 0.0], 5.0, 0.4, 2]]
+            [[0, -1.0, 0.0], 5.0, 0.3, 2],
+            [[2.5, 0, 0.0], 0.3, 5, 2]]
         
         for wall in walls:
             pos, length, width, height = wall
             begin_pos = [pos[0] - length / 2, pos[1] - width / 2, pos[2] - height / 2]
             end_pos = [pos[0] + length / 2, pos[1] + width / 2, pos[2] + height / 2]
-            add_3d_wall(env, begin_pos, end_pos, sphere_radius)
+            add_3d_wall(env, begin_pos, end_pos, sphere_radius, density)
 
 
     if obstacle_setup == 'hard':
@@ -49,7 +48,7 @@ def fill_env_with_obstacles(env, obstacle_setup):
             pos, length, width, height = wall
             begin_pos = [pos[0] - length / 2, pos[1] - width / 2, pos[2] - height / 2]
             end_pos = [pos[0] + length / 2, pos[1] + width / 2, pos[2] + height / 2]
-            add_3d_wall(env, begin_pos, end_pos, sphere_radius)
+            add_3d_wall(env, begin_pos, end_pos, sphere_radius, density)
 
 
         ########## Adding obstacles to the environment ##########
@@ -79,19 +78,21 @@ def add_sphere(env, pos, radius):
 
 
 
-def add_3d_wall(env, start, end, radius=0.2):
+def add_3d_wall(env, start, end, radius=0.2, density = 1.0):
     # Calculate the number of spheres needed in each dimension
-    n_spheres_x = abs(np.round((end[0] - start[0]) / (radius * 2)).astype(int))
-    n_spheres_y = abs(np.round((end[1] - start[1]) / (radius * 2)).astype(int))
-    n_spheres_z = abs(np.round((end[2] - start[2]) / (radius * 2)).astype(int))
+    n_spheres_x = abs(np.round((end[0] - start[0]) * density)/ (radius * 2)).astype(int)
+    n_spheres_y = abs(np.round((end[1] - start[1]) * density/ (radius * 2)).astype(int))
+    n_spheres_z = abs(np.round((end[2] - start[2]) * density/ (radius * 2)).astype(int))
+
+    print (f"n_spheres_x: {n_spheres_x} , n_spheres_y: {n_spheres_y} , n_spheres_z: {n_spheres_z}")
 
     # Add obstacles (spheres) to fill the volume
     for i in range(n_spheres_x):
         for j in range(n_spheres_y):
             for k in range(n_spheres_z):
-                sphere_x = start[0] + i * radius * 2
-                sphere_y = start[1] + j * radius * 2
-                sphere_z = start[2] + k * radius * 2
+                sphere_x = start[0] + i/density * radius * 2
+                sphere_y = start[1] + j/density * radius * 2
+                sphere_z = start[2] + k/density * radius * 2
                 add_sphere(env, [sphere_x, sphere_y, sphere_z], radius)
 
 
