@@ -7,6 +7,7 @@ import os
 import sys
 import math
 import numpy as np
+from tqdm import tqdm
 
 
 from helper_functions import env, plotting, utils, queue
@@ -41,13 +42,10 @@ class RrtStar:
         self.obs_boundary = self.env.obs_boundary
 
     def planning(self):
-        for k in range(self.iter_max):
+        for k in tqdm(range(self.iter_max)):
             node_rand = self.generate_random_node(self.goal_sample_rate)
             node_near = self.nearest_neighbor(self.vertex, node_rand)
             node_new = self.new_state(node_near, node_rand)
-
-            if k % 500 == 0:
-                print(k)
 
             if node_new and not self.utils.is_collision(node_near, node_new):
                 neighbor_index = self.find_near_neighbor(node_new)
@@ -174,7 +172,7 @@ def main():
     x_goal = (37, 18)  # Goal node
 
     # Arguments rrt_star: x_start, x_goal, step_len, goal_sample_rate, search_radius, iter_max
-    rrt_star = RrtStar(x_start, x_goal, 10, 0.10, 20, 4000) # default: (x_start, x_goal, 10, 0.10, 20, 10000)
+    rrt_star = RrtStar(x_start, x_goal, 10, 0.10, 20, 10000) # default: (x_start, x_goal, 10, 0.10, 20, 10000)
     rrt_star.planning()
 
 
