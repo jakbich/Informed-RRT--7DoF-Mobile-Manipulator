@@ -23,17 +23,14 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_rad
         dt=0.01, robots=robots, render=render
     )
     action = np.zeros(env.n())
-    action[0] = 0.2
-    action[1] = 0.0
+    action[0] = 0.0
     ob = env.reset(
         pos=np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.5, 0.0, 1.8, 0.5])
     )
-    
-    action = np.random.random(env.n())
-    ob, _, _, _ = env.step(action)
+    ob, *_ = env.step(action)
     print(f"Initial observation : {ob}")
     robot_config = [ob['robot_0']['joint_state']['position'], albert_radius]
-    print('robot_config:', robot_config)
+    current_joint_angles = robot_config[0][3:10]
 
 
     history = []
