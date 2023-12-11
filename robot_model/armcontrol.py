@@ -45,5 +45,8 @@ class ArmControl:
     
     def task_space_to_joint_space(self, joint_angles, target_position):
         jacobian, control_action = self.control_action(joint_angles, target_position)
-        joint_action = np.matmul(np.linalg.pinv(jacobian), control_action)
+        print(jacobian.shape)
+        print(control_action.shape)
+        extended_control_action = np.concatenate((control_action, np.zeros(3)))
+        joint_action = np.linalg.pinv(jacobian) @ extended_control_action
         return joint_action

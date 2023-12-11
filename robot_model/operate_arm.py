@@ -3,6 +3,7 @@ import gymnasium as gym
 import numpy as np
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
+from armcontrol import ArmControl
 
 
 def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_radius=0.3):
@@ -28,14 +29,18 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_rad
         pos=np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.5, 0.0, 1.8, 0.5])
     )
     ob, *_ = env.step(action)
-    print(f"Initial observation : {ob}")
+    # print(f"Initial observation : {ob}")
     robot_config = [ob['robot_0']['joint_state']['position'], albert_radius]
     current_joint_angles = robot_config[0][3:10]
+
+    target_position = np.array([0.1, 0.1, 0.1])
 
 
     history = []
     for _ in range(n_steps):
-        ob, *_ = env.step(action)
+        joint_action = ArmControl().task_space_to_joint_space(current_joint_angles, target_position)
+        padded_joint_action = np.pad(joint_action, (3, 12 - len(joint_action) - 3), 'constant')
+        ob, *_ = env.step(padded_joint_action)
         history.append(ob)
     env.close()
     return history
