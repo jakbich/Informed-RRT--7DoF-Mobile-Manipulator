@@ -34,7 +34,7 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_rad
     current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
 
 
-    target_position = np.array([0.1, 0.1, 0.1])
+    target_position = np.array([1.02, 5.02, 0.02])
 
 
     history = []
