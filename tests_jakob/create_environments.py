@@ -19,8 +19,8 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
         
         # Wall specifications [position, length, width, height]
         walls = [
-            [[0, -1.0, 0.0], 5.0, 0.3, 2],
-            [[2.5, 0, 0.0], 0.3, 5, 2]]
+            [[0, -1.0, 0.5], 5.0, 0.3, 1],
+            [[2.5, 0, 0.5], 0.3, 5, 1]]
         
         for wall in walls:
             pos, length, width, height = wall
@@ -31,17 +31,17 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
 
     if obstacle_setup == 'hard':
 
-        sphere_radius = 0.1
+        sphere_radius = 0.15
             # Wall specifications [position, length, width, height]
         walls = [
-            [[0, -1.0, 0.0], 10.0, 0.2, 2],
-            [[0, 1.0, 0.0], 10.0, 0.2, 2],
-            [[0, -3.0, 0.0], 10.0, 0.2, 2],
-            [[0, 3.0, 0.0], 10.0, 0.2, 2],
-            [[0, -6.0, 0.0], 16.0, 0.2, 2],
-            [[0, 6.0, 0.0], 16.0, 0.2, 2],
-            [[8, 0.0, 0.0], 0.2, 12, 2],
-            [[-8, 0.0, 0.0], 0.2, 12, 2]]
+            [[0, -1.0, 0.5], 10.0, 0.2, 1],
+            [[0, 1.0, 0.5], 10.0, 0.2, 1],
+            [[0, -3.0, 0.5], 10.0, 0.2,1],
+            [[0, 3.0, 0.5], 10.0, 0.2, 1],
+            [[0, -6.0, 0.5], 16.0, 0.2, 1],
+            [[0, 6.0,0.5], 16.0, 0.2, 1],
+            [[8, 0, 0.5], 0.2, 12, 1],
+            [[-8, 0, 0.5], 0.2, 12, 1]]
 
         # Create each wall
         for wall in walls:
@@ -80,9 +80,9 @@ def add_sphere(env, pos, radius):
 
 def add_3d_wall(env, start, end, radius=0.2, density = 1.0):
     # Calculate the number of spheres needed in each dimension
-    n_spheres_x = abs(np.round((end[0] - start[0]) * density)/ (radius * 2)).astype(int)
-    n_spheres_y = abs(np.round((end[1] - start[1]) * density/ (radius * 2)).astype(int))
-    n_spheres_z = abs(np.round((end[2] - start[2]) * density/ (radius * 2)).astype(int))
+    n_spheres_x = max(1, abs(np.round((end[0] - start[0]) * density)/ (radius * 2)).astype(int))
+    n_spheres_y = max(1, abs(np.round((end[1] - start[1]) * density/ (radius * 2))).astype(int))
+    n_spheres_z = max(1, abs(np.round((end[2] - start[2]) * density/ (radius * 2))).astype(int))
 
     print (f"n_spheres_x: {n_spheres_x} , n_spheres_y: {n_spheres_y} , n_spheres_z: {n_spheres_z}")
 
