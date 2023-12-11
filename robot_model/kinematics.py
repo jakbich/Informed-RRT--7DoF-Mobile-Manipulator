@@ -17,16 +17,27 @@ class Kinematics:
             [0.088, np.pi/2, 0, joint_angles[6]],
             [0, 0, 0.107, 0]]                               #extra for the flange, not for the joints!
         
+        # Add joint angle and speed limits
         self.joint_limits = [
-            (-2.8973, 2.8973),  # Joint 1 limits
-            (-1.7628, 1.7628),  # Joint 2 limits
-            (-2.8973, 2.8973),  # Joint 3 limits 
-            (-3.0718, -0.0698), # Joint 4 limits 
-            (-2.8973, 2.8973),  # Joint 5 lim
-            (-0.0175, 3.7525),  # Joint 6 limits
-            (-2.8973, 2.8973),  # Joint 7 limits
+            (-2.8973, 2.8973),  
+            (-1.7628, 1.7628), 
+            (-2.8973, 2.8973),   
+            (-3.0718, -0.0698), 
+            (-2.8973, 2.8973),  
+            (-0.0175, 3.7525),  
+            (-2.8973, 2.8973),  
         ]
 
+        self.speed_limits = [
+            (2.1750,),
+            (2.1750,),
+            (2.1750,),
+            (2.1750,),
+            (2.6100,),
+            (2.6100,),
+            (2.6100,)
+        ]
+        
         # Check joint limits
         for idx, (angle, (min_limit, max_limit)) in enumerate(zip(joint_angles, self.joint_limits)):
             if not (min_limit <= angle <= max_limit):
