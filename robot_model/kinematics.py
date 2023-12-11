@@ -95,9 +95,5 @@ if __name__ == "__main__":
     print("Jacobian Matrix:")
     print(jacobian_matrix)
 
-
-
-    # x, y, z = 10, 0, 5 
-    # print(kinematics.inverse_kinematics(x, y, z))
     
 
