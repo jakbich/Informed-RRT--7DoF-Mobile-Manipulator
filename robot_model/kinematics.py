@@ -54,22 +54,6 @@ class Kinematics:
         x, y, z = T[0, 3], T[1, 3], T[2, 3]
 
         return x, y, z
-    
-    # def jacobian(self, eps=1e-6):
-    #     J = np.zeros((3, len(self.dh_parameters) - 1))  # 3 rows for x, y, z; columns for each joint without the flange
-    #     original_position = self.forward_kinematics()
-
-    #     for i in range(len(self.dh_parameters) - 1):
-    #         # Change each joint angle slightly
-    #         theta = self.dh_parameters[i][3]
-    #         self.dh_parameters[i][3] += eps
-    #         changed_position = self.forward_kinematics()
-    #         self.dh_parameters[i][3] = theta  # Reset joint angle
-
-    #         # Compute partial derivative for each joint
-    #         J[:, i] = (changed_position - original_position) / eps
-
-    #     return J
 
     def jacobian(self):
         numjoints = len(self.dh_parameters) - 1  # Excluding the extra for the flange
@@ -97,11 +81,6 @@ class Kinematics:
             J[3:6, i] = np.round(z_i, 3)
 
         return J
-
-
-    def inverse_kinematics(self, x, y, z):
-        q = []
-        return q
     
 if __name__ == "__main__":
     # Define the joint angles
