@@ -49,6 +49,7 @@ def run_point_robot(n_steps=10000, render=False, goal=True, obstacles=True):
         history.append(ob)
     env.close()
     return history
+    
 
 
 if __name__ == "__main__":
