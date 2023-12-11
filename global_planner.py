@@ -3,8 +3,6 @@ RRT_star 2D
 @author: huiming zhou
 """
 
-import os
-import sys
 import math
 import numpy as np
 from tqdm import tqdm
