@@ -29,9 +29,10 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_rad
         pos=np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.5, 0.0, 1.8, 0.5])
     )
     ob, *_ = env.step(action)
-    # print(f"Initial observation : {ob}")
-    robot_config = [ob['robot_0']['joint_state']['position'], albert_radius]
-    current_joint_angles = robot_config[0][3:10]
+    # robot_config = [ob['robot_0']['joint_state']['position'], albert_radius]
+    # current_joint_angles = robot_config[0][3:10]
+    current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
+
 
     target_position = np.array([0.1, 0.1, 0.1])
 
@@ -41,11 +42,10 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_rad
         joint_action = ArmControl().task_space_to_joint_space(current_joint_angles, target_position)
         padded_joint_action = np.pad(joint_action, (3, 12 - len(joint_action) - 3), 'constant')
         ob, *_ = env.step(padded_joint_action)
+        current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
         history.append(ob)
     env.close()
     return history
-
-
 
 
 if __name__ == "__main__":
