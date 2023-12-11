@@ -1,14 +1,8 @@
 from kinematics import Kinematics
+import numpy as np
 
 class ArmControl:
     def __init__(self, kp, ki, kd):
-        """
-        Initialize the ArmControl class with PID constants.
-
-        :param kp: Proportional gain.
-        :param ki: Integral gain.
-        :param kd: Derivative gain.
-        """
         self.kp = kp
         self.ki = ki
         self.kd = kd
@@ -16,24 +10,12 @@ class ArmControl:
         self.integral_error = 0
 
     def current_position(self, joint_angles):
-        """
-        Compute the current position of the end-effector.
-
-        :param joint_angles: List of joint angles.
-        :return: Current position of the end-effector.
-        """
         kinematics = Kinematics(joint_angles)
         position = kinematics.forward_kinematics()
-        return position
+        jacobian = kinematics.jacobian()
+        return jacobian, position
     
     def PID(self, target_position, current_position):
-        """
-        Compute the control action using PID algorithm.
-
-        :param target_position: The desired position of the end-effector.
-        :param current_position: The current position of the end-effector.
-        :return: Control action.
-        """
         # Calculate error
         error = target_position - current_position
 
@@ -57,13 +39,11 @@ class ArmControl:
         return total_output
     
     def control_action(self, joint_angles, target_position):
-        """
-        Compute the control action using PID algorithm.
-
-        :param joint_angles: List of joint angles.
-        :param target_position: The desired position of the end-effector.
-        :return: Control action.
-        """
-        current_position = self.current_position(joint_angles)
+        jacobian, current_position = self.current_position(joint_angles)
         control_action = self.PID(target_position, current_position)
-        return control_action
+        return jacobian, control_action
+    
+    def task_space_to_joint_space(self, joint_angles, target_position):
+        jacobian, control_action = self.control_action(joint_angles, target_position)
+        joint_action = np.matmul(np.linalg.pinv(jacobian), control_action)
+        return joint_action
