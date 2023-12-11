@@ -55,21 +55,49 @@ class Kinematics:
 
         return x, y, z
     
-    def jacobian(self, eps=1e-6):
-        J = np.zeros((3, len(self.dh_parameters) - 1))  # 3 rows for x, y, z; columns for each joint without the flange
-        original_position = self.forward_kinematics()
+    # def jacobian(self, eps=1e-6):
+    #     J = np.zeros((3, len(self.dh_parameters) - 1))  # 3 rows for x, y, z; columns for each joint without the flange
+    #     original_position = self.forward_kinematics()
 
-        for i in range(len(self.dh_parameters) - 1):
-            # Change each joint angle slightly
-            theta = self.dh_parameters[i][3]
-            self.dh_parameters[i][3] += eps
-            changed_position = self.forward_kinematics()
-            self.dh_parameters[i][3] = theta  # Reset joint angle
+    #     for i in range(len(self.dh_parameters) - 1):
+    #         # Change each joint angle slightly
+    #         theta = self.dh_parameters[i][3]
+    #         self.dh_parameters[i][3] += eps
+    #         changed_position = self.forward_kinematics()
+    #         self.dh_parameters[i][3] = theta  # Reset joint angle
 
-            # Compute partial derivative for each joint
-            J[:, i] = (changed_position - original_position) / eps
+    #         # Compute partial derivative for each joint
+    #         J[:, i] = (changed_position - original_position) / eps
+
+    #     return J
+
+    def jacobian(self):
+        numjoints = len(self.dh_parameters) - 1  # Excluding the extra for the flange
+        J = np.zeros((6, numjoints))
+
+        T_all = [np.eye(4)]  # Start with the identity matrix
+
+        # Calculate transforms from the base frame to each joint
+        for i in range(numjoints):
+            a, alpha, d, theta = self.dh_parameters[i]
+            T = self.transformation_matrix(a, alpha, d, theta)
+            T_0_i = np.matmul(T_all[-1], T)
+            T_all.append(T_0_i)
+
+        T_0_end = T_all[-1]
+        t_end = T_0_end[0:3, 3]
+
+        # Build Jacobian
+        for i in range(numjoints):
+            T_0_i = T_all[i]
+            z_i = T_0_i[0:3, 2]
+            t_i = T_0_i[0:3, 3]
+
+            J[0:3, i] = np.round(np.cross(z_i, (t_end - t_i)), 3)
+            J[3:6, i] = np.round(z_i, 3)
 
         return J
+
 
     def inverse_kinematics(self, x, y, z):
         q = []
@@ -83,6 +111,11 @@ if __name__ == "__main__":
 
     position = kinematics.forward_kinematics()
     print(f"The end effector position is: {position}")
+
+    jacobian_matrix = kinematics.jacobian()
+    print("Jacobian Matrix:")
+    print(jacobian_matrix)
+
 
 
     # x, y, z = 10, 0, 5 
