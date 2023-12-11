@@ -1,33 +1,24 @@
 # https://frankaemika.github.io/docs/control_parameters.html
 
 import numpy as np
+import warnings
 
 class Kinematics:
     def __init__(self, joint_angles):
+        # Throw error when wrong amount of angles is provided
         if len(joint_angles) != 7:
             raise ValueError("The wrong amount of angles was provided.")
         
-        self.dh_parameters = [
-            [0, 0, 0.333, joint_angles[0]],
-            [0, -np.pi/2, 0, joint_angles[1]],
-            [0, np.pi/2, 0.316, joint_angles[2]],
-            [0.0825, np.pi/2, 0, joint_angles[3]],
-            [-0.0825, -np.pi/2, 0.384, joint_angles[4]],
-            [0, np.pi/2, 0, joint_angles[5]],
-            [0.088, np.pi/2, 0, joint_angles[6]],
-            [0, 0, 0.107, 0]]                               #extra for the flange, not for the joints!
-        
-        # Add joint angle and speed limits
-        self.joint_limits = [
-            (-2.8973, 2.8973),  
-            (-1.7628, 1.7628), 
-            (-2.8973, 2.8973),   
-            (-3.0718, -0.0698), 
-            (-2.8973, 2.8973),  
-            (-0.0175, 3.7525),  
-            (-2.8973, 2.8973),  
+        # Add joint angle limits and speed limits
+        self.angle_limits = [
+            (-2.8973, 2.8973),
+            (-1.7628, 1.7628),
+            (-2.8973, 2.8973),
+            (-3.0718, -0.0698),
+            (-2.8973, 2.8973),
+            (-0.0175, 3.7525),
+            (-2.8973, 2.8973),
         ]
-
         self.speed_limits = [
             (2.1750,),
             (2.1750,),
@@ -38,10 +29,22 @@ class Kinematics:
             (2.6100,)
         ]
         
-        # Check joint limits
-        for idx, (angle, (min_limit, max_limit)) in enumerate(zip(joint_angles, self.joint_limits)):
-            if not (min_limit <= angle <= max_limit):
-                raise ValueError(f"Joint angle {angle} for joint {idx+1} is out of limits: {min_limit} to {max_limit}.")
+        # Make sure joint angle is within limits
+        for i, (angle, (min, max)) in enumerate(zip(joint_angles, self.angle_limits)):
+            if not (min <= angle <= max):
+                corrected_angle = np.clip(angle, min, max)
+                warnings.warn(f"Joint angle {angle} for joint {i+1} is out of limits: {min} to {max}. Setting to {corrected_angle}.")
+                joint_angles[i] = corrected_angle
+        
+        self.dh_parameters = [
+            [0, 0, 0.333, joint_angles[0]],
+            [0, -np.pi/2, 0, joint_angles[1]],
+            [0, np.pi/2, 0.316, joint_angles[2]],
+            [0.0825, np.pi/2, 0, joint_angles[3]],
+            [-0.0825, -np.pi/2, 0.384, joint_angles[4]],
+            [0, np.pi/2, 0, joint_angles[5]],
+            [0.088, np.pi/2, 0, joint_angles[6]],
+            [0, 0, 0.107, 0]]                               #extra for the flange, not for the joints!
 
     def transformation_matrix(self, a, alpha, d, theta):
         T = np.array([  
