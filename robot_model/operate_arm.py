@@ -1,48 +1,50 @@
-import gym
+import gymnasium as gym
 import numpy as np
-import time
-from kinematics import Kinematics
 
-from urdfenvs.robots.albert import AlbertRobot
-from urdfenvs.sensors.full_sensor import FullSensor
+from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
+from urdfenvs.urdf_common.urdf_env import UrdfEnv
 
-def test_robot_arm_control_with_env():
-    # Initialize the Albert robot with velocity control mode
-    robot = AlbertRobot(mode="vel")
-    
-    # Add a full sensor to the robot
-    sensor = FullSensor(goal_mask=['position', 'radius'], obstacle_mask=['position', 'radius'])
-    robot.add_sensor(sensor)
 
-    # Create the Gym environment
-    env = gym.make("urdf-env-v0", dt=0.01, robots=[robot], render=True)
-
-    # Define joint configurations
-    joint_configurations = [
-        [0, 0, 0, -1, 0, 0, 0],
-        [0, 0.5, 0, -1, 0, 0, 0],
-        # ... more configurations ...
+def run_albert(n_steps=1000, render=False, joint_speeds=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]):
+    robots = [
+        GenericDiffDriveRobot(
+            urdf="albert.urdf",
+            mode="vel",
+            actuated_wheels=["wheel_right_joint", "wheel_left_joint"],
+            castor_wheels=["rotacastor_right_joint", "rotacastor_left_joint"],
+            wheel_radius = 0.08,
+            wheel_distance = 0.494,
+            spawn_rotation = 0,
+            facing_direction = '-y',
+        ),
     ]
-
-    for joint_angles in joint_configurations:
-        # Initialize Kinematics with the joint angles
-        kinematics = Kinematics(joint_angles)
-
-        # Calculate the desired end-effector position
-        position = kinematics.forward_kinematics()
-
-        # Move the robot in the environment
-        # Assuming the first 3 joints are not controllable and the last 7 are
-        action = np.hstack((np.zeros(3), joint_angles))
-        ob, _, _, _ = env.step(action)
-
-        # Wait for a short period to simulate the motion
-        time.sleep(1)
-
-        print(f"Moved to joint configuration: {joint_angles}")
-        print(f"End effector position should be: {position}")
-
+    env: UrdfEnv = gym.make(
+        "urdf-env-v0",
+        dt=0.01, robots=robots, render=render
+    )
+    action = np.zeros(env.n())
+    action[0] = 0.2
+    action[1] = 0.0
+    action[2] = joint_speeds[0]
+    action[3] = joint_speeds[1]
+    action[4] = joint_speeds[2]
+    action[5] = joint_speeds[3]
+    action[6] = joint_speeds[4]
+    action[7] = joint_speeds[5]
+    # action[8] = joint_speeds[6]
+    # action[9] = joint_speeds[7]
+    ob = env.reset(
+        pos=np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.5, 0.0, 1.8, 0.5])
+    )
+    print(f"Initial observation : {ob}")
+    history = []
+    for _ in range(n_steps):
+        ob, *_ = env.step(action)
+        history.append(ob)
     env.close()
+    return history
+
 
 if __name__ == "__main__":
-    test_robot_arm_control_with_env()
+    joint_speeds = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    run_albert(render=True, joint_speeds=joint_speeds)

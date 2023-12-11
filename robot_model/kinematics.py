@@ -22,7 +22,7 @@ class Kinematics:
             (-1.7628, 1.7628),  # Joint 2 limits
             (-2.8973, 2.8973),  # Joint 3 limits 
             (-3.0718, -0.0698), # Joint 4 limits 
-            (-2.8973, 2.8973),  # Joint 5 limits
+            (-2.8973, 2.8973),  # Joint 5 lim
             (-0.0175, 3.7525),  # Joint 6 limits
             (-2.8973, 2.8973),  # Joint 7 limits
         ]
