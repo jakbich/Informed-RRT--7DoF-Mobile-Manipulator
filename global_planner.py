@@ -3,14 +3,12 @@ RRT_star 2D
 @author: huiming zhou
 """
 
-import os
-import sys
 import math
 import numpy as np
 from tqdm import tqdm
 
 
-from helper_functions import env, plotting, utils, queue
+from helper_functions import plotting, utils, queue
 
 class Node:
     def __init__(self, n):
@@ -31,7 +29,7 @@ class RrtStar:
         self.vertex = [self.s_start]
         self.path = []
 
-        self.env = env.Env()
+        self.env = utils.Env()
         self.plotting = plotting.Plotting(x_start, x_goal)
         self.utils = utils.Utils()
 
