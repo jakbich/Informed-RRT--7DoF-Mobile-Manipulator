@@ -2,7 +2,7 @@ from kinematics import Kinematics
 import numpy as np
 
 class ArmControl:
-    def __init__(self, kp, ki, kd):
+    def __init__(self, kp=10, ki=1, kd= 0.1):
         self.kp = kp
         self.ki = ki
         self.kd = kd
