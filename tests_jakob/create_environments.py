@@ -42,6 +42,7 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
             [[0, 6.0,0.5], 16.0, 0.2, 1],
             [[8, 0, 0.5], 0.2, 12, 1],
             [[-8, 0, 0.5], 0.2, 12, 1]]
+            
 
         # Create each wall
         for wall in walls:
