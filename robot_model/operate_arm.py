@@ -5,9 +5,10 @@ from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDri
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from armcontrol import ArmControl
 import pybullet as p
+from kinematics import Kinematics
 
 
-def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_radius=0.3):
+def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_radius=0.3):
     robots = [
         GenericDiffDriveRobot(
             urdf="albert.urdf",
@@ -27,7 +28,7 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_rad
     action = np.zeros(env.n())
     action[0] = 0.0
     ob = env.reset(
-        pos=np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.5, 0.0, 1.8, 0.5])
+        pos=np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     )
     ob, *_ = env.step(action)
     # robot_config = [ob['robot_0']['joint_state']['position'], albert_radius]
@@ -35,7 +36,7 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_rad
     current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
 
 
-    target_position = np.array([0, -1, 1.3])
+    target_position = np.array([0.3, -0.3, 0.3])
 
     # Add axes at the origin (you can change the position as needed)
     origin = [0, 0, 0]
@@ -44,17 +45,28 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True, albert_rad
     p.addUserDebugLine(origin, [0, axis_length, 0], [0, 1, 0], 2.0)  # Y-axis in green
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
     # Add a visual marker at the target position
-    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
+    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.005, rgbaColor=[1, 0, 0, 1])
+    # p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
+
+    
+    
 
 
     history = []
     for _ in range(n_steps):
-        joint_action = ArmControl().task_space_to_joint_space(current_joint_angles, target_position)
-        padded_joint_action = np.pad(joint_action, (2, 12 - len(joint_action) - 2), 'constant')
-        ob, *_ = env.step(padded_joint_action)
-        current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
+        # joint_action = ArmControl().task_space_to_joint_space(current_joint_angles, target_position)
+        # padded_joint_action = np.pad(joint_action, (2, 12 - len(joint_action) - 2), 'constant')
+        # ob, *_ = env.step(padded_joint_action)
+        # current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
+        # history.append(ob)
+        action = np.zeros(env.n())
+        action[2] = 0.5
+        ob, *_ = env.step(action)
         history.append(ob)
+        current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
+        xyz = Kinematics(current_joint_angles).forward_kinematics()
+        p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=xyz)
+        
     env.close()
     return history
 

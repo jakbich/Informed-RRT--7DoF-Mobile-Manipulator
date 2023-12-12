@@ -96,18 +96,18 @@ class Kinematics:
 
         return J
     
-if __name__ == "__main__":
-    # Define the joint angles
-    joint_angles = [0, 0, 0, -1, 0, 0, 0]
+# if __name__ == "__main__":
+#     # Define the joint angles
+#     joint_angles = [0, 0, 0, -1, 0, 0, 0]
 
-    kinematics = Kinematics(joint_angles)
+#     kinematics = Kinematics(joint_angles)
 
-    position = kinematics.forward_kinematics()
-    print(f"The end effector position is: {position}")
+#     position = kinematics.forward_kinematics()
+#     print(f"The end effector position is: {position}")
 
-    jacobian_matrix = kinematics.jacobian()
-    print("Jacobian Matrix:")
-    print(jacobian_matrix)
+#     jacobian_matrix = kinematics.jacobian()
+#     print("Jacobian Matrix:")
+#     print(jacobian_matrix)
 
     
 
