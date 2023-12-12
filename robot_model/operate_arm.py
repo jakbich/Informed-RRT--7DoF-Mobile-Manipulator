@@ -6,6 +6,7 @@ from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from armcontrol import ArmControl
 import pybullet as p
 from kinematics import Kinematics
+from kinematics_3_joints import Kinematics3joints
 
 
 def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_radius=0.3):
@@ -45,7 +46,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_ra
     p.addUserDebugLine(origin, [0, axis_length, 0], [0, 1, 0], 2.0)  # Y-axis in green
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
     # Add a visual marker at the target position
-    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.005, rgbaColor=[1, 0, 0, 1])
+    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
     # p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
 
     
@@ -63,8 +64,8 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_ra
         action[2] = 0.5
         ob, *_ = env.step(action)
         history.append(ob)
-        current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
-        xyz = Kinematics(current_joint_angles).forward_kinematics()
+        current_joint_angles = ob['robot_0']['joint_state']['position'][3:6]
+        xyz = Kinematics3joints(current_joint_angles).forward_kinematics()
         p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=xyz)
         
     env.close()
