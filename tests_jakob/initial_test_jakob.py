@@ -3,111 +3,20 @@ import warnings
 import numpy as np
 import argparse
 import math
+import sys
+import os
 import pybullet as p
+import matplotlib.pyplot as plt
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
  
 from create_environments import fill_env_with_obstacles
 
-
-def normalize_angle(angle):
-    """
-    Normalize an angle to the range [-pi, pi].
-    """
-    while angle > np.pi:
-        angle -= 2 * np.pi
-    while angle < -np.pi:
-        angle += 2 * np.pi
-    return angle
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from  mobile_base.pid_control import PIDBase
 
 
-def get_robot_config(ob):
-    return ob['robot_0']['joint_state']['position']
-
-
-def get_robot_velocity(ob):
-    return ob['robot_0']['joint_state']['forward_velocity'][0]
-
-
-
-class PIDBase:
-    def __init__(self, kp=[0,0], ki=[0,0], kd=[0,0], dt=0.01):
-        self.kp = kp
-        self.ki = ki
-        self.kd = kd
-        self.dt = dt
-
-        self.last_error_linear = 0
-        self.last_error_angular= 0
-        
-        self.integral_linear = 0
-        self.integral_angular = 0
-
-        self.count_reached = 0
-
-
-    def update(self, current_pos=[0,0,0], goal_pos=[10,10,10]):
-
-
-        action = np.zeros(12)
-        angular_thresh = math.pi/100
-        linear_thresh = 0.1
-        max_linear_vel = 1.5
-
-
-         
-        # Angular
-        self.error_angular = normalize_angle(np.arctan2(goal_pos[1] - current_pos[1], goal_pos[0] - current_pos[0]) - current_pos[2])
-        self.error_linear = np.linalg.norm(np.array(goal_pos[0:2]) - np.array(current_pos[0:2]))
-
-
-        # if we are close enough to the goal
-        if self.error_linear < linear_thresh:
-            self.error_linear = 0
-            self.error_angular = 0  
-            action[0] = -0.01
-            print("backward motion")
-            self.count_reached += 1
-
-            return action
-        
-        # Calculate vector from our pos to goal
-        vector_to_goal = np.array(goal_pos[0:2]) - np.array(current_pos[0:2])
-
-        # Calculate vector that the robot is facing
-        facing_vector = np.array([np.cos(current_pos[2]), np.sin(current_pos[2])])
-
-        # Calculate scalar product to determine whether vectors face the same direction
-        scalar_product = np.dot(vector_to_goal, facing_vector)
-
-
-        if abs(self.error_angular) > angular_thresh:
-
-            self.integral_angular += self.error_angular * self.dt
-            derivative_angular = (self.error_angular - self.last_error_angular) / self.dt
-            self.last_error_angular = self.error_angular
-            action[1] = self.kp[1] * self.error_angular + self.ki[1] * self.integral_angular + self.kd[1] * derivative_angular
-
-        else:
-            # Linear
-
-            self.integral_linear += self.error_linear * self.dt
-            derivative_linear = (self.error_linear - self.last_error_linear) / self.dt
-            self.last_error_linear = self.error_linear
-
-            #action[0] = min(self.kp[0] * self.error_linear + self.ki[0] * self.integral_linear + self.kd[0] * derivative_linear,1)
-            action[0] =  self.kp[0] * self.error_linear + self.ki[0] * self.integral_linear + self.kd[0] * derivative_linear
-            action[0] = np.clip(action[0], 0, max_linear_vel)
-
-            if scalar_product < 0:
-                action[0] = -action[0]
-
-       
-        return action
-
-
-
-def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type='empty', sphere_density=1.0):
+def run_albert(n_steps=2000, render=False, goal=True, obstacles=True, env_type='empty', sphere_density=1.0):
     robots = [
         GenericDiffDriveRobot(
             urdf="albert.urdf",
@@ -127,7 +36,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type=
 
 
     # Set the target position
-    target_positions = np.array([[-0.5,-0.5,0], [1,-1,0]])#,[0,5, 0], [5,0,0 ]])
+    target_positions = np.array([[1,2,0], [3,1,0]])#,[5,0, 0], [0,0,0 ]])
 
     # Add axes at the origin (you can change the position as needed)
     origin = [0, 0, 0]
@@ -141,9 +50,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type=
     for target in target_positions:
         p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target)
 
-
-
-
     # Fill the environment with obstacles, argument passed to determine which one (empty, easy, hard):
     fill_env_with_obstacles(env, env_type, sphere_density)
 
@@ -155,9 +61,14 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type=
     
     print(f"Initial observation : {ob}")
     history = []
+    linear_actions = []  # List to store action[0] values
+    linear_errors = []
+    final_reach_sent = False
 
-    pid_controller = PIDBase(kp=[1, 3], ki=[0.0, 0.0], kd=[0, 0], dt=0.01)
+    p.resetDebugVisualizerCamera(cameraDistance=5, cameraYaw=0, cameraPitch=-89.99, cameraTargetPosition=[0, 0, 0])
 
+    pid_controller = PIDBase(kp=[1, 1], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
+    prev_action = np.zeros(env.n())
     for step in range(n_steps):
 
         ob, *_ = env.step(action)
@@ -165,10 +76,16 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type=
 
         # Track reached positions
         if pid_controller.count_reached != len(target_positions):
-            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=target_positions[pid_controller.count_reached])
+            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=target_positions[pid_controller.count_reached], action=prev_action)
+            prev_action = action    
+            linear_actions.append(action[0])
+            linear_errors.append(pid_controller.error_linear)
+              # Store the linear action
 
         else:
-            print("All positions reached!")
+            if not final_reach_sent:
+                print("All positions reached!")
+                final_reach_sent = True
             action = np.zeros(env.n())
 
         if step % 100 == 0:
@@ -179,8 +96,9 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, env_type=
             #print (f"lin_error {pid_controller.error_linear}, ang_error {pid_controller.error_angular}\n\n")
 
         history.append(ob)
+
     env.close()
-    return history
+    return history, linear_actions, linear_errors
 
 
 if __name__ == "__main__":
@@ -194,11 +112,14 @@ if __name__ == "__main__":
     sphere_density = args.sphere_density
 
 
-    # pid_controller = PIDBase(kp=[0.5, 0.5], ki=[0.0, 0.0], kd=[0.0, 0.0], dt=0.01)
-    # print(pid_controller.update(current_pos=[0,0,0], goal_pos=[-10,-10,-10])[0:3])
-
-
     warning_flag = "default" if show_warnings else "ignore"
     with warnings.catch_warnings():
         warnings.filterwarnings(warning_flag)
-        run_albert(render=True, env_type=env_type, sphere_density=sphere_density)
+        history, linear_actions, linear_errors = run_albert(render=True, env_type=env_type, sphere_density=sphere_density)
+
+    plt.plot(linear_actions)
+    plt.plot(linear_errors)
+    plt.xlabel('Time Steps')
+    plt.ylabel('Linear Action (action[0])')
+    plt.title('Linear Action Over Time')
+    plt.show()
