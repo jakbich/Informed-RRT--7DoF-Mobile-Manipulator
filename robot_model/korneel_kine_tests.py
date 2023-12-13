@@ -124,5 +124,31 @@ if __name__ == "__main__":
     print("Jacobian Matrix:")
     print(jacobian_matrix)
 
+
+    # ----------------------------------------------------------------------BASE TRANSFORMATION    
+    # Define the translation matrix for moving to (0, 0.15, 0.63)
+    T = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0.15],
+        [0, 0, 1, 0.63],
+        [0, 0, 0, 1]
+    ])
+
+    # Define the rotation matrix for -90 degrees around Z-axis
+    theta = np.radians(-90)  # Convert -90 degrees to radians
+    R = np.array([
+        [np.cos(theta), -np.sin(theta), 0, 0],
+        [np.sin(theta), np.cos(theta), 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]
+    ])
+
+    # Compute the combined transformation matrix for Translation first, then Rotation
+    M = np.dot(R, T)
+    
+    # Print the transformation matrix
+    print("Transformation Matrix:\n", M)
+
+
     
 
