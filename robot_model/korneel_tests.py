@@ -41,7 +41,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_ra
     current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
     print('current_joint_angles' , current_joint_angles)
     print('ob', ob)
-    target_position = np.array([0, -0.5, 1.2])
+    target_position = np.array([-0.29984502780071987, 0.34172961788271644, 1.333])
 
     # Add axes at the origin (you can change the position as needed)
     origin = [0, 0, 0]
@@ -51,7 +51,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_ra
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
     # Add a visual marker at the target position
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=[0.49172962, 0.29984503, 1.963])
 
     
     
@@ -59,15 +59,15 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_ra
 
     history = []
     for _ in range(n_steps):
-        # joint_action = ArmControl().task_space_to_joint_space(current_joint_angles, target_position)
-        # padded_joint_action = np.pad(joint_action, (2, 12 - len(joint_action) - 2), 'constant')
-        # ob, *_ = env.step(padded_joint_action)
-        # current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
-        # history.append(ob)
-        action = np.zeros(env.n())
-        action[2] = 0
-        ob, *_ = env.step(action)
+        joint_action = ArmControl().task_space_to_joint_space(current_joint_angles, target_position)
+        padded_joint_action = np.pad(joint_action, (2, 12 - len(joint_action) - 2), 'constant')
+        ob, *_ = env.step(padded_joint_action)
+        current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
         history.append(ob)
+        # action = np.zeros(env.n())
+        # action[2] = 0
+        # ob, *_ = env.step(action)
+        # history.append(ob)
         current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
         xyz = Kinematics(current_joint_angles).forward_kinematics()
         p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=xyz)

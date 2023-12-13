@@ -2,6 +2,7 @@
 
 import numpy as np
 import warnings
+import math
 
 class Kinematics:
     def __init__(self, joint_angles):
@@ -46,12 +47,16 @@ class Kinematics:
             [0.088, np.pi/2, 0, joint_angles[6]],
             [0, 0, 0.107, 0]]                               #extra for the flange, not for the joints!
 
-    def transformation_matrix(self, a, alpha, d, theta):
-        T = np.array([  
-            [np.cos(theta), -np.sin(theta)*np.cos(alpha), np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
-            [np.sin(theta), np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
-            [0, np.sin(alpha), np.cos(alpha), d],
-            [0, 0, 0, 1]])
+    def transformation_matrix(self, a, alpha, d, q):
+        ca = math.cos(alpha)
+        sa = math.sin(alpha)
+        cq = math.cos(q)
+        sq = math.sin(q)
+
+        T = [[cq, -sq, 0, a],
+            [ca * sq, ca * cq, -sa, -d * sa],
+            [sa * sq, cq * sa, ca, d * ca],
+            [0, 0, 0, 1]]
         return T
 
     def forward_kinematics(self):
@@ -95,6 +100,8 @@ class Kinematics:
             J[3:6, i] = np.round(z_i, 3)
 
         return J
+    
+
     
 if __name__ == "__main__":
     # Define the joint angles

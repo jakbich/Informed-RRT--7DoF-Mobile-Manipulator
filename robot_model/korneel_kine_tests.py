@@ -1,6 +1,7 @@
 # https://frankaemika.github.io/docs/control_parameters.html
 
 import numpy as np
+import math
 import warnings
 
 class Kinematics:
@@ -46,12 +47,16 @@ class Kinematics:
             [0.088, np.pi/2, 0, joint_angles[6]]]
             # [0, 0, 0.107, 0]]                               #extra for the flange, not for the joints!
 
-    def transformation_matrix(self, a, alpha, d, theta):
-        T = np.array([  
-            [np.cos(theta), -np.sin(theta)*np.cos(alpha), np.sin(theta)*np.sin(alpha), a*np.cos(theta)],
-            [np.sin(theta), np.cos(theta)*np.cos(alpha), -np.cos(theta)*np.sin(alpha), a*np.sin(theta)],
-            [0, np.sin(alpha), np.cos(alpha), d],
-            [0, 0, 0, 1]])
+    def transformation_matrix(self, a, alpha, d, q):
+        ca = math.cos(alpha)
+        sa = math.sin(alpha)
+        cq = math.cos(q)
+        sq = math.sin(q)
+
+        T = [[cq, -sq, 0, a],
+            [ca * sq, ca * cq, -sa, -d * sa],
+            [sa * sq, cq * sa, ca, d * ca],
+            [0, 0, 0, 1]]
         return T
 
     def forward_kinematics(self):
@@ -67,10 +72,10 @@ class Kinematics:
 
         x, y, z = T[0, 3], T[1, 3], T[2, 3]
 
-        return x, y, z, T
+        return x, y, z
 
     def jacobian(self):
-        numjoints = len(self.dh_parameters) - 1  # Excluding the extra for the flange
+        numjoints = len(self.dh_parameters) 
         J = np.zeros((6, numjoints))
 
         T_all = [np.eye(4)]  # Start with the identity matrix
@@ -96,33 +101,63 @@ class Kinematics:
 
         return J
     
+    def debug_transformations(self):
+        T = np.eye(4)
+        transformation_matrices = []
+
+        for i, parameters in enumerate(self.dh_parameters):
+            a = parameters[0]
+            alpha = parameters[1]
+            d = parameters[2]
+            theta = parameters[3]
+
+            Ti = self.transformation_matrix(a, alpha, d, theta)
+            T = np.dot(T, Ti)
+            transformation_matrices.append(T)
+
+            x, y, z = T[0, 3], T[1, 3], T[2, 3]
+            print(f"Joint {i + 1}:")
+            print("Transformation Matrix:\n", T)
+            print(f"Position (x, y, z): ({x}, {y}, {z})\n")
+    
 if __name__ == "__main__":
-    # Define the joint angles
 
-    angle_limits = [
-        (-2.8973, 2.8973),
-        (-1.7628, 1.7628),
-        (-2.8973, 2.8973),
-        (-3.0718, -0.0698),
-        (-2.8973, 2.8973),
-        (-0.0175, 3.7525),
-        (-2.8973, 2.8973),
-    ]
-
-    inital_pose = np.array([min+(max-min)/2 for min, max in angle_limits], dtype=np.float64)
-
-    joint_angles = [inital_pose[0], inital_pose[1], inital_pose[2], inital_pose[3], inital_pose[4], inital_pose[5], inital_pose[6]]
-    print('Joint angles: ', joint_angles)
-    print(len(joint_angles))
+    joint_angles = [0.0, 0.0, 0.0, -1.5708, 0.0, 1.8675, 0.0]
 
     kinematics = Kinematics(joint_angles)
+    kinematics.debug_transformations()
 
-    position = kinematics.forward_kinematics()
-    print(f"The end effector position is: {position}")
 
-    jacobian_matrix = kinematics.jacobian()
-    print("Jacobian Matrix:")
-    print(jacobian_matrix)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # angle_limits = [
+    #     (-2.8973, 2.8973),
+    #     (-1.7628, 1.7628),
+    #     (-2.8973, 2.8973),
+    #     (-3.0718, -0.0698),
+    #     (-2.8973, 2.8973),
+    #     (-0.0175, 3.7525),
+    #     (-2.8973, 2.8973),
+    # ]
+
+    # inital_pose = np.array([min+(max-min)/2 for min, max in angle_limits], dtype=np.float64)
+
+
+
+
+
 
 
     # ----------------------------------------------------------------------BASE TRANSFORMATION    
@@ -145,9 +180,20 @@ if __name__ == "__main__":
 
     # Compute the combined transformation matrix for Translation first, then Rotation
     M = np.dot(R, T)
-    
+
     # Print the transformation matrix
     print("Transformation Matrix:\n", M)
+
+    # Define the point as a 4D vector (x, y, z, 1)
+    P = np.array([0.5506552752335201, -1.6886238525761472e-17, 0.7572267968606404, 1])  # Replace x, y, z with the coordinates of your point
+
+    # Apply the transformation matrix to the point
+    P_transformed = np.dot(M, P)
+
+    # Print the transformed point
+    print("Transformed Point:", P_transformed)
+
+
 
 
     
