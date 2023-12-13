@@ -3,6 +3,9 @@ import numpy as np
 import pybullet as p
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
+from armcontrol import ArmControl
+
+
 # Import or define ArmControl and Kinematics as needed
 
 def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
@@ -19,7 +22,7 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
     ob = env.reset()
 
     ob, *_ = env.step(action)
-    current_joint_angles = ob['robot_0']['joint_state']['position'][0:6]
+    current_joint_angles = ob['robot_0']['joint_state']['position'][:7]
     print('current_joint_angles' , current_joint_angles)
 
 
@@ -31,7 +34,7 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
 
     # Add a visual marker at the target position
-    target_position = np.array([0.550655275233520, -1.68862385257615E-17, 0.7572267968])  # Adjust as needed
+    target_position = np.array([0.550655275233520, -1.68862385257615E-17, 0.65])  # Adjust as needed
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
 
@@ -39,9 +42,11 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
     for i in range(n_steps):
         # Control the endpoint here using inverse kinematics or similar approach
         # Example: joint_action = ArmControl().task_space_to_joint_space(...)
+        joint_action = ArmControl().task_space_to_joint_space(current_joint_angles, target_position)
+        padded_joint_action = np.pad(joint_action, (2, 12 - len(joint_action) - 2), 'constant')
 
-        # Execute action
-        ob, *_ = env.step(action)
+        ob, *_ = env.step(padded_joint_action)
+        current_joint_angles = ob['robot_0']['joint_state']['position'][:7]
         history.append(ob)
 
     env.close()

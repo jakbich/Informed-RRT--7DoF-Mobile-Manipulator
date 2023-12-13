@@ -8,7 +8,7 @@ class Kinematics:
     def __init__(self, joint_angles):
         # Throw error when wrong amount of angles is provided
         if len(joint_angles) != 7:
-            raise ValueError("The wrong amount of angles was provided.")
+            raise ValueError("The wrong amount of angles was provided.", len(joint_angles), "instead of 7.")
         
         # Add joint angle limits and speed limits
         self.angle_limits = [
@@ -160,38 +160,38 @@ if __name__ == "__main__":
 
 
 
-    # ----------------------------------------------------------------------BASE TRANSFORMATION    
-    # Define the translation matrix for moving to (0, 0.15, 0.63)
-    T = np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0.15],
-        [0, 0, 1, 0.63],
-        [0, 0, 0, 1]
-    ])
+    # # ----------------------------------------------------------------------BASE TRANSFORMATION    
+    # # Define the translation matrix for moving to (0, 0.15, 0.63)
+    # T = np.array([
+    #     [1, 0, 0, 0],
+    #     [0, 1, 0, 0.15],
+    #     [0, 0, 1, 0.63],
+    #     [0, 0, 0, 1]
+    # ])
 
-    # Define the rotation matrix for -90 degrees around Z-axis
-    theta = np.radians(-90)  # Convert -90 degrees to radians
-    R = np.array([
-        [np.cos(theta), -np.sin(theta), 0, 0],
-        [np.sin(theta), np.cos(theta), 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
-    ])
+    # # Define the rotation matrix for -90 degrees around Z-axis
+    # theta = np.radians(-90)  # Convert -90 degrees to radians
+    # R = np.array([
+    #     [np.cos(theta), -np.sin(theta), 0, 0],
+    #     [np.sin(theta), np.cos(theta), 0, 0],
+    #     [0, 0, 1, 0],
+    #     [0, 0, 0, 1]
+    # ])
 
-    # Compute the combined transformation matrix for Translation first, then Rotation
-    M = np.dot(R, T)
+    # # Compute the combined transformation matrix for Translation first, then Rotation
+    # M = np.dot(R, T)
 
-    # Print the transformation matrix
-    print("Transformation Matrix:\n", M)
+    # # Print the transformation matrix
+    # print("Transformation Matrix:\n", M)
 
-    # Define the point as a 4D vector (x, y, z, 1)
-    P = np.array([0.5506552752335201, -1.6886238525761472e-17, 0.7572267968606404, 1])  # Replace x, y, z with the coordinates of your point
+    # # Define the point as a 4D vector (x, y, z, 1)
+    # P = np.array([0.5506552752335201, -1.6886238525761472e-17, 0.7572267968606404, 1])  # Replace x, y, z with the coordinates of your point
 
-    # Apply the transformation matrix to the point
-    P_transformed = np.dot(M, P)
+    # # Apply the transformation matrix to the point
+    # P_transformed = np.dot(M, P)
 
-    # Print the transformed point
-    print("Transformed Point:", P_transformed)
+    # # Print the transformed point
+    # print("Transformed Point:", P_transformed)
 
 
 
