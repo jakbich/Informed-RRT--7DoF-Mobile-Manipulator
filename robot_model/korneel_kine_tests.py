@@ -43,8 +43,8 @@ class Kinematics:
             [0.0825, np.pi/2, 0, joint_angles[3]],
             [-0.0825, -np.pi/2, 0.384, joint_angles[4]],
             [0, np.pi/2, 0, joint_angles[5]],
-            [0.088, np.pi/2, 0, joint_angles[6]],
-            [0, 0, 0.107, 0]]                               #extra for the flange, not for the joints!
+            [0.088, np.pi/2, 0, joint_angles[6]]]
+            # [0, 0, 0.107, 0]]                               #extra for the flange, not for the joints!
 
     def transformation_matrix(self, a, alpha, d, theta):
         T = np.array([  
@@ -67,7 +67,7 @@ class Kinematics:
 
         x, y, z = T[0, 3], T[1, 3], T[2, 3]
 
-        return x, y, z
+        return x, y, z, T
 
     def jacobian(self):
         numjoints = len(self.dh_parameters) - 1  # Excluding the extra for the flange
@@ -98,7 +98,22 @@ class Kinematics:
     
 if __name__ == "__main__":
     # Define the joint angles
-    joint_angles = [0, 0, 0, -1, 0, 0, 0]
+
+    angle_limits = [
+        (-2.8973, 2.8973),
+        (-1.7628, 1.7628),
+        (-2.8973, 2.8973),
+        (-3.0718, -0.0698),
+        (-2.8973, 2.8973),
+        (-0.0175, 3.7525),
+        (-2.8973, 2.8973),
+    ]
+
+    inital_pose = np.array([min+(max-min)/2 for min, max in angle_limits], dtype=np.float64)
+
+    joint_angles = [inital_pose[0], inital_pose[1], inital_pose[2], inital_pose[3], inital_pose[4], inital_pose[5], inital_pose[6]]
+    print('Joint angles: ', joint_angles)
+    print(len(joint_angles))
 
     kinematics = Kinematics(joint_angles)
 
