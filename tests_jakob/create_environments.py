@@ -11,7 +11,8 @@ from mpscenes.obstacles.box_obstacle import BoxObstacle
 def fill_env_with_obstacles(env, obstacle_setup, density=1):
 
     if obstacle_setup == 'empty':
-        pass
+        all_obstacles = []
+
 
     if obstacle_setup == 'easy':
 
@@ -53,7 +54,7 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
             pos, length, width, height = wall
             begin_pos = [pos[0] - length / 2, pos[1] - width / 2, pos[2] - height / 2]
             end_pos = [pos[0] + length / 2, pos[1] + width / 2, pos[2] + height / 2]
-            add_3d_wall(env, begin_pos, end_pos, sphere_radius, density)
+            sphere_wall = add_3d_wall(env, begin_pos, end_pos, sphere_radius, density)
             all_obstacles.append(sphere_wall)   
 
 

@@ -26,8 +26,8 @@ class RRTStar:
         self.node_list = [np.array(config_start)]
         self.path = []
         self.robot_radius = 0.5
-        self.goal_epsilon = 1.0
-        self.parent ={}
+        self.goal_epsilon = 0.5
+        self.parent ={tuple(self.config_start): None}
 
 
         self.visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
@@ -56,7 +56,7 @@ class RRTStar:
     
         
     def distance(self, point1, point2):
-        print("\n Points: ", point1, point2)
+        #print("\n Points: ", point1, point2)
         return np.linalg.norm(np.array(point1[:2]) - np.array(point2[:2]))
     
 ##############################################################################################################
@@ -66,9 +66,21 @@ class RRTStar:
             if new_node is not None:
                 nearest_node = self.find_nearest_node(new_node)
                 if self.check_path(new_node, nearest_node):
+                    # Calculate intermediate node if the new node is too far
+                    if self.distance(new_node, nearest_node) > self.step_len:
+                        new_node = self.calculate_intermediate_node(nearest_node, new_node)
                     self.add_node(new_node, nearest_node)
 
-        self.add_node(self.config_goal, self.node_list[-1])
+                    # Check if the new node is close enough to the goal
+                    if self.is_goal_reached(new_node):
+                        self.add_node(np.array(self.config_goal), new_node)
+                        break
+
+        # Ensure the goal is added to the tree
+        if not self.is_goal_reached(self.node_list[-1]):
+            nearest_node_to_goal = self.find_nearest_node(self.config_goal)
+            self.add_node(self.config_goal, nearest_node_to_goal)
+
 
     def find_nearest_node(self, new_node):
         # Find the nearest node in the existing tree to the new node
@@ -81,6 +93,11 @@ class RRTStar:
                 nearest_node = node
         return nearest_node
 
+    def calculate_intermediate_node(self, nearest_node, new_node):
+        direction = np.array(new_node) - np.array(nearest_node)
+        norm_direction = direction / np.linalg.norm(direction)
+        intermediate_node = np.array(nearest_node) + norm_direction * self.step_len
+        return intermediate_node
 
     def check_path(self, new_node, nearest_node):
         # Number of subpoints to check along the path
@@ -106,6 +123,8 @@ class RRTStar:
 
         self.path.append((np.array(parent_node), new_node))
         p.addUserDebugLine(parent_node,new_node, [0.2, 0.2, 0.2], lineWidth=3)
+        p.addUserDebugLine(parent_node+[0,0,0.01],new_node+[0,0,0.01], [0.2, 0.2, 0.2], lineWidth=3)
+        p.addUserDebugLine(parent_node+[0,0,0.02],new_node+[0,0,0.02], [0.2, 0.2, 0.2], lineWidth=3)
 
         self.parent[tuple(new_node)] = tuple(parent_node)
 
@@ -126,8 +145,12 @@ class RRTStar:
     def visualize_path(self, path):
         for i in range(len(path) - 1):
             start_point, end_point = path[i], path[i + 1]
-            # Unpack the start and end points of each line segment
-            p.addUserDebugLine(start_point[1], end_point[1], [1, 0, 0], lineWidth=10)
+            # Convert list to tuple for concatenation
+            offset = (0, 0, 0.01)
+            p.addUserDebugLine(np.array(start_point[1]) + offset, np.array(end_point[1]) + offset, [1, 0, 0], lineWidth=10)
+            offset = (0, 0, 0.02)
+            p.addUserDebugLine(np.array(start_point[1]) + offset, np.array(end_point[1]) + offset, [1, 0, 0], lineWidth=10)
+
 
 
 def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
@@ -150,7 +173,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     action = np.zeros(env.n())
 
     env.reset(
-        pos=np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, -1.5, 0.0, 1.8, 0.5])
+        pos=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1.5, 0.0, 1.8, 0.5])
     )
     
     p.resetDebugVisualizerCamera(cameraDistance=5, cameraYaw=0, cameraPitch=-89.99, cameraTargetPosition=[0, 0, 0])
@@ -159,46 +182,23 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     # Filling with obstacles and creating the list with al spheres [x,y,z,radius]
     all_obstacles = np.array(fill_env_with_obstacles(env, 'easy',1))
 
-    print('all obstavels shape\n')
-    print((all_obstacles))
+    # print('all obstavels shape\n')
+    # print((all_obstacles))
 
     history = []
 
-    goal_pos = (3,3,0)
+    goal_pos = (3,-3,0)
+    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.2, rgbaColor=[0, 1, 0, 1])
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=goal_pos)
+    
     # Create instance of RRTStar
-    rrt = RRTStar(obstacles=all_obstacles, iter_max=500, config_goal=goal_pos)
+    rrt = RRTStar(obstacles=all_obstacles, iter_max=500, config_goal=goal_pos, step_len=0.5)
     rrt.planning()
     path_to_goal = rrt.find_path()
     rrt.visualize_path(path_to_goal)
 
-    print(f"\n\nPath: {rrt.path}")
-    print(f"\n\nNodes: {rrt.node_list}")
-
-
-    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.2, rgbaColor=[0, 1, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=goal_pos)
-    # # # Plot path
-    # for node in tqdm(rrt.path):
-    #     p.addUserDebugLine(node[0], node[1], [0, 0, 1], lineWidth=5.0)
-
-    # # # Plot nodes
-    # for node in tqdm(rrt.node_list):
-    #     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=node)
-
-
-    # # Sample random nodes
-    # random_nodes = [rrt.sample_new_node(5) for _ in range(1000)]
-    # print(random_nodes)
-
-    # # Define point appearance
-    
-    
-    # # Plot random nodes
-    # for node in tqdm(random_nodes):
-    #     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=node)
-
-
-        # print(ob)
+    # print(f"\n\nPath: {rrt.path}")
+    # print(f"\n\nNodes: {rrt.node_list}")
 
 
     for _ in range(n_steps):

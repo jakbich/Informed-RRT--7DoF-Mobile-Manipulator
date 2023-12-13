@@ -9,14 +9,16 @@ import pybullet as p
 import matplotlib.pyplot as plt
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
+import icecream as ic   
  
 from create_environments import fill_env_with_obstacles
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from  mobile_base.pid_control import PIDBase
+from global_path.RRT_global import RRTStar
+from mobile_base.pid_control import PIDBase
 
 
-def run_albert(n_steps=2000, render=False, goal=True, obstacles=True, env_type='empty', sphere_density=1.0):
+def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type='empty', sphere_density=1.0):
     robots = [
         GenericDiffDriveRobot(
             urdf="albert.urdf",
@@ -33,10 +35,10 @@ def run_albert(n_steps=2000, render=False, goal=True, obstacles=True, env_type='
         "urdf-env-v0",
         dt=0.01, robots=robots, render=render
     )
-
-
+    
+    
     # Set the target position
-    target_positions = np.array([[1,2,0], [3,1,0]])#,[5,0, 0], [0,0,0 ]])
+    #target_positions = np.array([[1,4,0], [4,1,0], [10,10, 0], [0,0,0]])
 
     # Add axes at the origin (you can change the position as needed)
     origin = [0, 0, 0]
@@ -47,11 +49,10 @@ def run_albert(n_steps=2000, render=False, goal=True, obstacles=True, env_type='
     # Add a visual marker at the target position
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
 
-    for target in target_positions:
-        p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target)
+    #for target in target_positions:
+    #    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target)
 
-    # Fill the environment with obstacles, argument passed to determine which one (empty, easy, hard):
-    fill_env_with_obstacles(env, env_type, sphere_density)
+
 
     action = np.zeros(env.n())
 
@@ -59,8 +60,28 @@ def run_albert(n_steps=2000, render=False, goal=True, obstacles=True, env_type='
         pos=np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
     )
     
-    print(f"Initial observation : {ob}")
+
+    # Filling with obstacles and creating the list with al spheres [x,y,z,radius]
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'easy',1))
+
+    ####RRT#####
+
     history = []
+
+    goal_pos = (1,-3,0)
+    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.2, rgbaColor=[0, 1, 0, 1])
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=goal_pos)
+    
+    rrt = RRTStar(obstacles=all_obstacles, iter_max=500, config_goal=goal_pos, step_len=0.8)
+    rrt.planning()
+    path_to_goal = np.array(rrt.find_path())
+    rrt.visualize_path(path_to_goal)
+    print("PATH SHAPE: ", path_to_goal.shape)
+    print("Path Type", type(path_to_goal))
+    ###/RRT####
+
+
+    print(f"Initial observation : {ob}")
     linear_actions = []  # List to store action[0] values
     linear_errors = []
     final_reach_sent = False
@@ -69,14 +90,18 @@ def run_albert(n_steps=2000, render=False, goal=True, obstacles=True, env_type='
 
     pid_controller = PIDBase(kp=[1, 1], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
     prev_action = np.zeros(env.n())
+
+
+
+
     for step in range(n_steps):
 
         ob, *_ = env.step(action)
         current_obs  = ob['robot_0']['joint_state']['position']
 
         # Track reached positions
-        if pid_controller.count_reached != len(target_positions):
-            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=target_positions[pid_controller.count_reached], action=prev_action)
+        if pid_controller.count_reached != len(path_to_goal):
+            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=path_to_goal[:,1,:][pid_controller.count_reached], action=prev_action)
             prev_action = action    
             linear_actions.append(action[0])
             linear_errors.append(pid_controller.error_linear)

@@ -23,8 +23,6 @@ def get_robot_velocity(ob):
 
 
 
-
-
 class PIDBase:
     def __init__(self, kp=[0,0], ki=[0,0], kd=[0,0], dt=0.01):
         self.kp = kp
