@@ -33,7 +33,7 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
 
     # Add a visual marker at the target position
     # target_position = np.array([0.550655275233520, -1.68862385257615E-17, 0.65])  # Adjust as needed
-    target_position = np.array([0.61336948,  0.61336948,  0.7767755 ])
+    target_position = np.array([-0.31940916,  0.01587151,  1.09758974 ])
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
 
@@ -43,12 +43,12 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
         
         control_action = np.zeros(env.n())
 
-        # control_action[3] = ArmControl().control_action(current_joint_angles, target_position)[0]
+        control_action[3] = ArmControl().control_action(current_joint_angles, target_position)[0]
         # control_action[2] = ArmControl().control_action(current_joint_angles, target_position)[2]
         # print('control_action', control_action)
-        print('control_action', ArmControl().control_action(current_joint_angles, target_position))
+        # print('control_action', ArmControl().control_action(current_joint_angles, target_position))
 
-        control_action[2:] = ArmControl().control_action(current_joint_angles, target_position)
+        # control_action[2:] = ArmControl().control_action(current_joint_angles, target_position)
         
         debug_action = np.zeros(env.n())
         debug_action[2] = 1
@@ -70,7 +70,7 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
     from mpl_toolkits.mplot3d import Axes3D
 
     xyz_history = np.array(xyz_history)
-    # print('xyz_history', xyz_history[500])
+    print('xyz_history', xyz_history[500])
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(xyz_history[:, 0], xyz_history[:, 1], xyz_history[:, 2])
