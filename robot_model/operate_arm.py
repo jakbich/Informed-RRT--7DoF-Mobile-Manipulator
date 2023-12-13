@@ -6,7 +6,7 @@ from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from armcontrol import ArmControl
 import pybullet as p
 from kinematics import Kinematics
-from kinematics_3_joints import Kinematics3joints
+# from kinematics_3_joints import Kinematics3joints
 
 
 def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_radius=0.3):
@@ -27,17 +27,15 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_ra
         dt=0.01, robots=robots, render=render
     )
     action = np.zeros(env.n())
-    action[0] = 0.0
-    ob = env.reset(
-        pos=np.array([0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-    )
+    ob = env.reset
+
     ob, *_ = env.step(action)
     # robot_config = [ob['robot_0']['joint_state']['position'], albert_radius]
     # current_joint_angles = robot_config[0][3:10]
     current_joint_angles = ob['robot_0']['joint_state']['position'][3:10]
 
 
-    target_position = np.array([0.3, -0.3, 0.3])
+    target_position = np.array([1, -1.6886238525761472e-17, 1.25])
 
     # Add axes at the origin (you can change the position as needed)
     origin = [0, 0, 0]
@@ -47,10 +45,8 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_ra
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
     # Add a visual marker at the target position
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
-    # p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=[0.15, -0.55065528, 1.3872268])
 
-    
-    
 
 
     history = []
@@ -64,8 +60,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True, albert_ra
         action[2] = 0.5
         ob, *_ = env.step(action)
         history.append(ob)
-        current_joint_angles = ob['robot_0']['joint_state']['position'][3:6]
-        xyz = Kinematics3joints(current_joint_angles).forward_kinematics()
+        xyz = Kinematics(current_joint_angles).forward_kinematics()
         p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=xyz)
         
     env.close()
