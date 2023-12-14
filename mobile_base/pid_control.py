@@ -2,7 +2,6 @@ import numpy as np
 import math
 
 
-
 def normalize_angle(angle):
     """
     Normalize an angle to the range [-pi, pi].
@@ -41,9 +40,9 @@ class PIDBase:
 
     def update(self, current_pos=[0,0,0], goal_pos=[10,10,10], action=np.zeros(12)):
 
-        angular_thresh = math.pi/100
+        angular_thresh = math.pi/120
         linear_thresh = 0.1
-        max_linear_vel = 1
+        max_linear_vel = 1.5
 
         # Angular
         self.error_angular = normalize_angle(np.arctan2(goal_pos[1] - current_pos[1], goal_pos[0] - current_pos[0]) - current_pos[2])

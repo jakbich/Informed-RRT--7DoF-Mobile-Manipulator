@@ -26,8 +26,11 @@ class RRTStar:
         self.node_list = [np.array(config_start)]
         self.path = []
         self.robot_radius = 0.5
-        self.goal_epsilon = 0.5
+        self.goal_epsilon = 1
         self.parent ={tuple(self.config_start): None}
+
+        # For RRT* algorithm
+        self.cost = {tuple(self.config_start): 0}
 
 
         self.visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
@@ -60,26 +63,75 @@ class RRTStar:
         return np.linalg.norm(np.array(point1[:2]) - np.array(point2[:2]))
     
 ##############################################################################################################
-    def planning(self, sample_range=5):
+    # def planning(self, sample_range=5):
+    #     while not self.is_goal_reached(self.node_list[-1]):
+    #         new_node = self.sample_new_node(sample_range)
+    #         if new_node is not None:
+    #             nearest_node = self.find_nearest_node(new_node)
+    #             if self.check_path(new_node, nearest_node):
+    #                 # Calculate intermediate node if the new node is too far
+    #                 if self.distance(new_node, nearest_node) > self.step_len:
+    #                     new_node = self.calculate_intermediate_node(nearest_node, new_node)
+    #                 self.add_node(new_node, nearest_node)
+
+    #                 # Check if the new node is close enough to the goal
+    #                 if self.is_goal_reached(new_node):
+    #                     self.add_node(np.array(self.config_goal), new_node)
+    #                     break
+
+    #     # Ensure the goal is added to the tree
+    #     if not self.is_goal_reached(self.node_list[-1]):
+    #         nearest_node_to_goal = self.find_nearest_node(self.config_goal)
+    #         self.add_node(self.config_goal, nearest_node_to_goal)
+
+    def add_node(self, new_node, parent_node):
+        # Add the new node to the tree and path
+        self.node_list.append(new_node)
+        p.createMultiBody(baseMass=0, baseVisualShapeIndex=self.visual_shape_id, basePosition=new_node)
+
+        self.path.append((np.array(parent_node), new_node))
+        p.addUserDebugLine(parent_node,new_node, [0.2, 0.2, 0.2], lineWidth=3)
+        p.addUserDebugLine(parent_node+[0,0,0.01],new_node+[0,0,0.01], [0.2, 0.2, 0.2], lineWidth=3)
+        p.addUserDebugLine(parent_node+[0,0,0.02],new_node+[0,0,0.02], [0.2, 0.2, 0.2], lineWidth=3)
+
+        self.parent[tuple(new_node)] = tuple(parent_node)
+        self.cost[tuple(new_node)] = self.cost[tuple(parent_node)] + self.distance(parent_node, new_node)
+
+    def planning(self, sample_range=5, search_radius=2):
         while not self.is_goal_reached(self.node_list[-1]):
             new_node = self.sample_new_node(sample_range)
             if new_node is not None:
-                nearest_node = self.find_nearest_node(new_node)
-                if self.check_path(new_node, nearest_node):
-                    # Calculate intermediate node if the new node is too far
-                    if self.distance(new_node, nearest_node) > self.step_len:
-                        new_node = self.calculate_intermediate_node(nearest_node, new_node)
-                    self.add_node(new_node, nearest_node)
+                nearby_nodes = self.find_nearby_nodes(new_node, search_radius)
+                best_parent, min_cost = self.choose_best_parent(new_node, nearby_nodes)
+                if best_parent is not None:
+                    self.add_node(new_node, best_parent)
+                    self.rewire(new_node, nearby_nodes)
 
-                    # Check if the new node is close enough to the goal
-                    if self.is_goal_reached(new_node):
-                        self.add_node(np.array(self.config_goal), new_node)
-                        break
+        # Last connection to goal node
+        print("\n\n Came here manually add stuff")
+        nearest_node_to_goal = self.find_nearest_node(self.config_goal)
+        self.add_node(np.array(self.config_goal), nearest_node_to_goal)
+        nearby_nodes = self.find_nearby_nodes(self.config_goal, search_radius)
+        self.rewire(np.array(self.config_goal), nearby_nodes)
 
-        # Ensure the goal is added to the tree
-        if not self.is_goal_reached(self.node_list[-1]):
-            nearest_node_to_goal = self.find_nearest_node(self.config_goal)
-            self.add_node(self.config_goal, nearest_node_to_goal)
+    # def planning(self, sample_range=5, search_radius=2):
+    #     goal_connected = False
+
+    #     while not goal_connected:
+    #         new_node = self.sample_new_node(sample_range)
+    #         if new_node is not None:
+    #             nearby_nodes = self.find_nearby_nodes(new_node, search_radius)
+    #             best_parent, min_cost = self.choose_best_parent(new_node, nearby_nodes)
+    #             if best_parent is not None:
+    #                 self.add_node(new_node, best_parent)
+    #                 self.rewire(new_node, nearby_nodes)
+
+    #                 if self.is_goal_reached(new_node):
+    #                     goal_connected = True
+
+    #     # Now explicitly add the goal node
+    #     nearest_node_to_goal = self.find_nearest_node(self.config_goal)
+    #     self.add_node(np.array(self.config_goal), nearest_node_to_goal)
 
 
     def find_nearest_node(self, new_node):
@@ -92,6 +144,37 @@ class RRTStar:
                 closest_dist = dist
                 nearest_node = node
         return nearest_node
+
+    # Find nodes within a radius
+    def find_nearby_nodes(self, new_node, radius):
+        nearby_nodes = []
+        for node in self.node_list:
+            if self.distance(node, new_node) < radius:
+                nearby_nodes.append(node)
+        return nearby_nodes
+
+    # Find the best node out of the nearby nodes and calculate cost
+    def choose_best_parent(self, new_node, nearby_nodes):
+        min_cost = float('inf')
+        best_parent = None
+        for node in nearby_nodes:
+            if self.check_path(new_node, node):
+                cost = self.cost[tuple(node)] + self.distance(node, new_node)
+                if cost < min_cost:
+                    min_cost = cost
+                    best_parent = node
+        return best_parent, min_cost
+
+    # Rewire the tree to minimize the costs
+    def rewire(self, new_node, nearby_nodes):
+        for node in nearby_nodes:
+            if node is not self.parent[tuple(new_node)] and self.check_path(node, new_node):
+                new_cost = self.cost[tuple(new_node)] + self.distance(new_node, node)
+                if new_cost < self.cost[tuple(node)]:
+                    self.parent[tuple(node)] = tuple(new_node)
+                    self.cost[tuple(node)] = new_cost
+                    # Update visualization if necessary
+
 
     def calculate_intermediate_node(self, nearest_node, new_node):
         direction = np.array(new_node) - np.array(nearest_node)
@@ -115,19 +198,6 @@ class RRTStar:
         return True  # No collision detected along the path
     
 
-
-    def add_node(self, new_node, parent_node):
-        # Add the new node to the tree and path
-        self.node_list.append(new_node)
-        p.createMultiBody(baseMass=0, baseVisualShapeIndex=self.visual_shape_id, basePosition=new_node)
-
-        self.path.append((np.array(parent_node), new_node))
-        p.addUserDebugLine(parent_node,new_node, [0.2, 0.2, 0.2], lineWidth=3)
-        p.addUserDebugLine(parent_node+[0,0,0.01],new_node+[0,0,0.01], [0.2, 0.2, 0.2], lineWidth=3)
-        p.addUserDebugLine(parent_node+[0,0,0.02],new_node+[0,0,0.02], [0.2, 0.2, 0.2], lineWidth=3)
-
-        self.parent[tuple(new_node)] = tuple(parent_node)
-
     def is_goal_reached(self, node):
         # Check if the node is within a certain threshold of the goal
         return self.distance(node, self.config_goal) < self.goal_epsilon
@@ -136,20 +206,22 @@ class RRTStar:
         path = []
         current_node = tuple(self.config_goal)
         while current_node != tuple(self.config_start):
+            print('current node: ', current_node)
             parent_node = self.parent[current_node]
+            print('parent node: ', parent_node)
             path.append((parent_node, current_node))
             current_node = parent_node
         path.reverse()  # Reverse the path to start from the beginning
         return path
     
     def visualize_path(self, path):
-        for i in range(len(path) - 1):
+        for i in range(len(path)-1):
             start_point, end_point = path[i], path[i + 1]
             # Convert list to tuple for concatenation
             offset = (0, 0, 0.01)
-            p.addUserDebugLine(np.array(start_point[1]) + offset, np.array(end_point[1]) + offset, [1, 0, 0], lineWidth=10)
+            p.addUserDebugLine(np.array(start_point[0]) + offset, np.array(end_point[0]) + offset, [1, 0, 0], lineWidth=10)
             offset = (0, 0, 0.02)
-            p.addUserDebugLine(np.array(start_point[1]) + offset, np.array(end_point[1]) + offset, [1, 0, 0], lineWidth=10)
+            p.addUserDebugLine(np.array(start_point[0]) + offset, np.array(end_point[0]) + offset, [1, 0, 0], lineWidth=10)
 
 
 
