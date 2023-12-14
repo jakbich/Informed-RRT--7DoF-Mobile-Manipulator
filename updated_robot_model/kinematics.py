@@ -1,3 +1,5 @@
+#code based on https://gist.github.com/mlaves/a60cbc5541bd6c9974358fbaad9e4c51 (thank you very much)
+
 from sympy import symbols, cos, sin, pi, Matrix, eye, lambdify
 import numpy as np
 from numba import jit
@@ -19,15 +21,15 @@ class Kinematics:
             {'a':  0.088,  'd': 0.107, 'alpha':  pi/2 },
         ]
 
-        self.speed_limits = [
-                                (-2.8973, 2.8973),
-                                (-1.7628, 1.7628),
-                                (-2.8973, 2.8973),
-                                (-3.0718, -0.0698),
-                                (-2.8973, 2.8973),
-                                (-0.0175, 3.7525),
-                                (-2.8973, 2.8973)
-                            ]
+        self.speed = np.array([
+            [2.1750],
+            [2.1750],
+            [2.1750],
+            [2.1750],
+            [2.6100],
+            [2.6100],
+            [2.6100]
+            ])
 
         # Compute direct kinematics matrix
         DK = eye(4)
@@ -53,18 +55,9 @@ class Kinematics:
         self.A_lamb = lambdify(self.joint_angles, A, 'numpy')
         self.J_lamb = lambdify(self.joint_angles, J, 'numpy')
     
-    def FK(self, joint_positions, xyz=False):
-        q = joint_positions
-        A = self.A_lamb(*q)
-        return A.flatten()[-3:], A
-    
-    # def jacobian(self, joint_positions):
-    #     q = joint_positions
-    #     J = self.J_lamb(q[0], q[1], q[2], q[3], q[4], q[5], q[6])
-    #     return J
-    
-    def jacobian(self, joint_positions):
-        q = joint_positions
-        J = self.J_lamb(q[0], q[1], q[2], q[3], q[4], q[5], q[6])
+    def matrices(self, joint_positions):
+        A = self.A_lamb(*joint_positions)
+        J = self.J_lamb(*joint_positions)
         J = J/np.linalg.norm(J)
-        return J
+        position = A.flatten()[-3:]
+        return position, A, J
