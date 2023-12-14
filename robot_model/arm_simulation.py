@@ -32,7 +32,7 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
 
     # Add a visual marker at the target position
-    target_position = np.array([0.3,  0.01,  0.4])  
+    target_position = np.array([0.58193844, 0. ,        0.654902])  
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
 
