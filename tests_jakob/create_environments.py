@@ -8,6 +8,19 @@ from mpscenes.obstacles.sphere_obstacle import SphereObstacle
 from mpscenes.obstacles.box_obstacle import BoxObstacle
 
 
+
+def create_walls(env, walls, density=1, sphere_radius=0.2):
+    all_obstacles = []
+    for wall in walls:
+        pos, length, width, height = wall
+        begin_pos = [pos[0] - length / 2, pos[1] - width / 2, pos[2] - height / 2]
+        end_pos = [pos[0] + length / 2, pos[1] + width / 2, pos[2] + height / 2]
+        sphere_wall = add_3d_wall(env, begin_pos, end_pos, sphere_radius, density)
+        all_obstacles.append(sphere_wall)
+
+    return all_obstacles   
+        
+
 def fill_env_with_obstacles(env, obstacle_setup, density=1):
 
     if obstacle_setup == 'empty':
@@ -23,15 +36,23 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
             [[0, -1.0, 0.5], 5.0, 0.3, 1],
             [[2.5, 0, 0.5], 0.3, 5, 1]]
         
-        all_obstacles = []
-        
-        for wall in walls:
-            pos, length, width, height = wall
-            begin_pos = [pos[0] - length / 2, pos[1] - width / 2, pos[2] - height / 2]
-            end_pos = [pos[0] + length / 2, pos[1] + width / 2, pos[2] + height / 2]
-            sphere_wall = add_3d_wall(env, begin_pos, end_pos, sphere_radius, density)
-            all_obstacles.append(sphere_wall)   
+        all_obstacles = create_walls(env, walls, density, sphere_radius)
             
+
+    if obstacle_setup == 'medium':
+
+        sphere_radius = 0.2
+        
+        # Wall specifications [position, length, width, height]
+        walls = [
+            [[0, -1.0, 0.5], 5.0, 0.3, 0.5],
+            [[3, -3.0, 0.5], 5.0, 0.3, 0.5],
+            [[0.6, -4.5, 0.5], 0.3, 3, 0.5]]
+        
+        all_obstacles = create_walls(env, walls, density, sphere_radius)
+            
+
+
 
     if obstacle_setup == 'hard':
 
@@ -47,16 +68,7 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
             [[8, 0, 0.5], 0.2, 12, 1],
             [[-8, 0, 0.5], 0.2, 12, 1]]
             
-        all_obstacles = []
-
-        # Create each wall
-        for wall in walls:
-            pos, length, width, height = wall
-            begin_pos = [pos[0] - length / 2, pos[1] - width / 2, pos[2] - height / 2]
-            end_pos = [pos[0] + length / 2, pos[1] + width / 2, pos[2] + height / 2]
-            sphere_wall = add_3d_wall(env, begin_pos, end_pos, sphere_radius, density)
-            all_obstacles.append(sphere_wall)   
-
+        all_obstacles = create_walls(env, walls, density, sphere_radius)
 
     return all_obstacles
 
@@ -78,7 +90,7 @@ def add_3d_wall(env, start, end, radius=0.2, density = 1.0):
     n_spheres_y = max(1, abs(np.round((end[1] - start[1]) * density/ (radius * 2))).astype(int))
     n_spheres_z = max(1, abs(np.round((end[2] - start[2]) * density/ (radius * 2))).astype(int))
 
-    print (f"n_spheres_x: {n_spheres_x} , n_spheres_y: {n_spheres_y} , n_spheres_z: {n_spheres_z}")
+    #print (f"n_spheres_x: {n_spheres_x} , n_spheres_y: {n_spheres_y} , n_spheres_z: {n_spheres_z}")
 
     spheres_wall = []
     # Add obstacles (spheres) to fill the volume

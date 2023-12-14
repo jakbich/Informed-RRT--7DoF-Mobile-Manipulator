@@ -1,6 +1,6 @@
 import numpy as np
 import math
-
+from scipy import interpolate
 
 def normalize_angle(angle):
     """
@@ -38,11 +38,18 @@ class PIDBase:
         self.count_reached = 0
 
 
-    def update(self, current_pos=[0,0,0], goal_pos=[10,10,10], action=np.zeros(12)):
+    def update(self, current_pos=[0,0,0], goal_pos=[10,10,0], action=np.zeros(12), last_step=False):
 
-        angular_thresh = math.pi/120
-        linear_thresh = 0.1
+        # Thresholds and max values
+        angular_thresh = math.pi/10
+        linear_thresh = 0.2
         max_linear_vel = 1.5
+
+        if last_step:
+            min_linear_vel = 0.0
+
+        else:
+            min_linear_vel = 0.8
 
         # Angular
         self.error_angular = normalize_angle(np.arctan2(goal_pos[1] - current_pos[1], goal_pos[0] - current_pos[0]) - current_pos[2])
@@ -54,7 +61,10 @@ class PIDBase:
             self.error_linear = 0
             self.error_angular = 0  
             action[0] = -0.01
-            self.count_reached += 1
+            action[1] = 0.0
+
+            if not last_step:
+                self.count_reached += 1
 
             return action
         
@@ -82,8 +92,9 @@ class PIDBase:
             self.last_error_linear = self.error_linear
 
             control_velocity = self.kp[0] * self.error_linear + self.ki[0] * self.integral_linear + self.kd[0] * derivative_linear            
-            control_velocity = np.clip(control_velocity, 0, max_linear_vel)
+            control_velocity = np.clip(control_velocity, max_linear_vel, max_linear_vel)
 
+            
             action[0] = action[0] * 0.95 + control_velocity * 0.05
 
 
@@ -92,3 +103,60 @@ class PIDBase:
 
        
         return action
+    
+
+def interpolate_path(path, max_dist=5.0):
+    """
+    This function interpolates points bet between nodes in case nodes are far apart
+    """
+    interpolated_path = []
+
+    for i in range(len(path) - 1):
+        x1 = path[i][0][0]
+        y1 = path[i][0][1]
+        z1 = path[i][0][2]
+        x2 = path[i][1][0]
+        y2 = path[i][1][1]
+        z2 = path[i][1][2]
+
+        x_dist = x2 - x1
+        y_dist = y2 - y1
+        z_dist = z2 - z1
+        edge_length = np.sqrt(x_dist ** 2 + y_dist ** 2 + z_dist ** 2)
+        interpolated_path.append(path[i])
+
+        if edge_length > max_dist:
+            n_nodes = (edge_length // max_dist).astype(int)
+            for ii in range(n_nodes):
+                interpolated_path.append(
+                    np.array([x1 + (ii + 1) * x_dist / (n_nodes + 1), y1 + (ii + 1) * y_dist / (n_nodes + 1), z1 + (ii + 1) * z_dist / (n_nodes + 1)]))
+
+    interpolated_path.append(path[-1])
+    return interpolated_path
+    
+
+
+
+def path_smoother(shortest_path_configs, total_cost_path=10.0):
+    x = []
+    y = []
+    z = []
+
+ 
+    for point in shortest_path_configs:
+
+        x.append(point[0][0])
+        y.append(point[0][1])
+        z.append(point[0][2])
+    tck, *rest = interpolate.splprep([x, y, z], s=0.1)
+
+    # Create a number of points on the spline according to path cost
+    num_steps = int(total_cost_path) * 30
+    u = np.linspace(0, 1, num=num_steps)
+
+    x_smooth, y_smooth, z_smooth = interpolate.splev(u, tck)
+    smooth_configs = [np.array([x_smooth[i], y_smooth[i], z_smooth[i]]) for i in range(len(x_smooth))]
+    return np.array(smooth_configs)
+
+
+

@@ -15,7 +15,7 @@ from create_environments import fill_env_with_obstacles
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from global_path.RRT_global import RRTStar
-from mobile_base.pid_control import PIDBase
+from mobile_base.pid_control import PIDBase, path_smoother, interpolate_path
 
 
 def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type='empty', sphere_density=1.0):
@@ -37,8 +37,9 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     )
     
     
-    # Set the target position
-    #target_positions = np.array([[1,4,0], [4,1,0], [10,10, 0], [0,0,0]])
+    print("\nStarting simulation...\n--------------------------------\n\n")
+
+
 
     # Add axes at the origin (you can change the position as needed)
     origin = [0, 0, 0]
@@ -46,12 +47,6 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     p.addUserDebugLine(origin, [axis_length, 0, 0], [1, 0, 0], 2.0)  # X-axis in red
     p.addUserDebugLine(origin, [0, axis_length, 0], [0, 1, 0], 2.0)  # Y-axis in green
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
-    # Add a visual marker at the target position
-    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 0, 0, 1])
-
-    #for target in target_positions:
-    #    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target)
-
 
 
     action = np.zeros(env.n())
@@ -62,27 +57,55 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     
 
     # Filling with obstacles and creating the list with al spheres [x,y,z,radius]
-    all_obstacles = np.array(fill_env_with_obstacles(env, 'easy',1))
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'medium',1))
 
     ####RRT#####
 
     history = []
 
-    goal_pos = (1,3,0)
-    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=goal_pos)
-    
+    # Goal for medium env (1.5,-4.5,0)
+    goal_pos = (1.5,-4.5, 0)
+
     # Initial action to get initial observation
     action = np.zeros(env.n())
     for stp in range(10):
         ob, *_ = env.step(action)
 
-    rrt = RRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],obstacles=all_obstacles, iter_max=500, config_goal=goal_pos, step_len=0.5)
+    rrt = RRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],
+                  obstacles=all_obstacles, iter_max=500, 
+                  config_goal=goal_pos, step_len=1.5,
+                  sampling_range=10, rewire_radius=3)
     rrt.planning()
     path_to_goal = np.array(rrt.find_path())
-    rrt.visualize_path(path_to_goal)
-    print("PATH SHAPE: ", path_to_goal.shape)
-    print("Path Type", type(path_to_goal))
+    
+    # Plotting the goal
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=rrt.visual_shape_goal, basePosition=goal_pos)
+    
+
+    # total_cost_path = sum(rrt.cost.values())
+    total_cost_path = rrt.calculate_path_cost(path_to_goal)
+    
+    if len(path_to_goal) > 3:
+        interpolated_path = interpolate_path(path_to_goal, max_dist=4.0)
+        path_to_goal_smooth = path_smoother(interpolated_path, total_cost_path=total_cost_path)
+        rrt.visualize_path(path_to_goal[:,0,:])
+        rrt.visualize_path(path_to_goal_smooth, spline=True)
+
+        # Make path_to_goal sparse (every 10th point) while keeping the last point
+        path_to_goal_sparse = path_to_goal_smooth[::20]
+        path_to_goal_sparse[-1] = path_to_goal_smooth[-1]
+        final_path = path_to_goal_sparse
+        pid_controller = PIDBase(kp=[1, 0.75], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
+
+
+    else:
+        final_path = path_to_goal[:,0,:]
+        print("Final path: ", path_to_goal)
+        print(final_path)
+        rrt.visualize_path(final_path)
+        pid_controller = PIDBase(kp=[1, 2], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
+
+
     ###/RRT####
 
 
@@ -93,7 +116,6 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
     p.resetDebugVisualizerCamera(cameraDistance=5, cameraYaw=0, cameraPitch=-89.99, cameraTargetPosition=[0, 0, 0])
 
-    pid_controller = PIDBase(kp=[1, 2], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
     prev_action = np.zeros(env.n())
 
 
@@ -105,25 +127,21 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
         current_obs  = ob['robot_0']['joint_state']['position']
 
         # Track reached positions
-        if pid_controller.count_reached != len(path_to_goal):
-            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=path_to_goal[:,0,:][pid_controller.count_reached], action=prev_action)
+        if pid_controller.count_reached != len(final_path)-1:
+            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=final_path[pid_controller.count_reached], action=prev_action)
             prev_action = action    
-            linear_actions.append(action[0])
-            linear_errors.append(pid_controller.error_linear)
-              # Store the linear action
+        
+        # right before last step
+        elif pid_controller.count_reached == len(final_path)-1:
+            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=final_path[-1], action=prev_action, last_step = True)
 
+
+        # action for last step
         else:
             if not final_reach_sent:
                 print("All positions reached!")
                 final_reach_sent = True
             action = np.zeros(env.n())
-
-        if step % 100 == 0:
-            print (f"current_obs: {current_obs[0:3]} ,\n action: {action[0:2]}")
-            print(f"PID_ERROR_linear", pid_controller.error_linear)
-            print(f"PID_ERROR_angular", pid_controller.error_angular)
-            print (f"step: {step}")
-            #print (f"lin_error {pid_controller.error_linear}, ang_error {pid_controller.error_angular}\n\n")
 
         history.append(ob)
 
