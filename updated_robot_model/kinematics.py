@@ -47,18 +47,18 @@ class Kinematics:
 
         # Compute A matrix and Jacobian
         A = DK[0:3, 0:4].transpose().reshape(12, 1)
-        self.Jacobian = A.jacobian(Matrix(self.joint_angles))
+        J = A.jacobian(Matrix(self.joint_angles))
 
         # Lambdify the matrices for faster computation
         self.A_lamb = lambdify(self.joint_angles, A, 'numpy')
-        self.J_lamb = lambdify(self.joint_angles, self.Jacobian, 'numpy')
+        self.J_lamb = lambdify(self.joint_angles, J, 'numpy')
     
     def FK(self, joint_positions, xyz=False):
         q = joint_positions
-        A = self.A_lamb(q[0], q[1], q[2], q[3], q[4], q[5], q[6])
-        return A.flatten()[-3:]
+        A = self.A_lamb(*q)
+        return A.flatten()[-3:], A
     
-    # def J(self, joint_positions):
+    # def jacobian(self, joint_positions):
     #     q = joint_positions
     #     J = self.J_lamb(q[0], q[1], q[2], q[3], q[4], q[5], q[6])
     #     return J

@@ -3,45 +3,62 @@ import numpy as np
 from simple_pid import PID
 
 class ArmControl:
-    def __init__(self):
-        # Initialize PID controller for each degree of freedom in task space
-        self.pid_x = PID(1, 0.1, 0.05, setpoint=0)
-        self.pid_y = PID(1, 0.1, 0.05, setpoint=0)
-        self.pid_z = PID(1, 0.1, 0.05, setpoint=0)
+    # def __init__(self):
+        # Initialize PID controller
+        # self.pid = PID(2, 0., 0.0, setpoint=0)
+
+    def __init__(self, kp=1.0, ki=0, kd=0):
+        self.arm_model = Kinematics()
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.errors = [0]
+        self.integral_error = 0.0
 
         # Initialize Kinematics
         self.kinematics = Kinematics()
 
     def control_action(self, joint_angles, target_position):
         # Get current position from forward kinematics
-        A = self.kinematics.A_lamb(*joint_angles.flatten())
-        current_position = A[:3, -1]  # Extract position from transformation matrix
+        xyz, A = self.kinematics.FK(joint_angles)
 
-        # Calculate error
-        error = target_position - current_position
+        orientation = np.array([[1, 0, 0],
+                                    [0, -1, 0],
+                                    [0, 0, -1]])
 
-        # Apply PID control
-        control = np.array([self.pid_x(error[0]), self.pid_y(error[1]), self.pid_z(error[2])])
+        multi_dim_position = np.vstack([orientation.reshape(-1, 1), target_position.reshape(-1, 1)])
 
-        return control, error
+        # Calculate error)
+        error = multi_dim_position - A
 
-    def task_space_to_joint_space(self, joint_angles, target_position):
-        control_action, error = self.control_action(joint_angles, target_position)
+        jacobian_temp = self.kinematics.jacobian(joint_angles)
 
-        # Calculate Jacobian
-        J = self.kinematics.jacobian(joint_angles.flatten())
+        jacobian = np.zeros((jacobian_temp.shape[0], jacobian_temp.shape[1]))
 
-        # Extract the relevant portion of the Jacobian (for X, Y, Z control)
-        J_xyz = J[:3, :]  # Assuming the first 3 rows correspond to X, Y, Z translation
+        for i in range(jacobian.shape[0]):  # Loop over rows
+            for j in range(jacobian.shape[1]):  # Loop over columns
+                jacobian[i, j] = jacobian_temp[i, j]
 
-        # Convert task space control action to joint space
-        joint_action = np.linalg.pinv(J_xyz) @ control_action
+        # # Apply PID control
+        # task_space_velocity = self.pid(error.flatten())
+        # joint_action = np.linalg.pinv(jacobian) @ task_space_velocity
 
-        print("Joint action: ", joint_action)
+        # # Apply speed limits
+        # speed_limits = self.kinematics.speed_limits
+        # for idx, limit in enumerate(speed_limits):
+        #     joint_action[idx] = np.clip(joint_action[idx], -limit[0], limit[0])
 
-        # Apply speed limits
-        speed_limits = self.kinematics.speed_limits
-        for idx, limit in enumerate(speed_limits):
-            joint_action[idx] = np.clip(joint_action[idx], -limit[0], limit[0])
+        error = multi_dim_position - A
+        derivative_error = error - self.errors[-1]
+        self.integral_error += error
 
-        return joint_action, error
+        J = jacobian
+
+        endpoint_vel = self.kp * error + self.ki * self.integral_error + self.kd * derivative_error
+
+        joint_vel = np.linalg.pinv(J) @ endpoint_vel
+        # joint_vel = np.clip(joint_vel, -self.arm_model.max_joint_speed, self.arm_model.max_joint_speed)
+
+        # return joint_vel.flatten()
+
+        return joint_vel.flatten(), error

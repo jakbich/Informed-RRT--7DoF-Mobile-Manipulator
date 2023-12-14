@@ -8,7 +8,7 @@ from kinematics import Kinematics
 
 # Import or define ArmControl and Kinematics as needed
 
-def run_panda(n_steps=10, render=False, goal=True, obstacles=False):
+def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
     robots = [
         GenericUrdfReacher(urdf="panda_with_gripper.urdf", mode="vel"),
     ]
@@ -34,6 +34,7 @@ def run_panda(n_steps=10, render=False, goal=True, obstacles=False):
     # Add a visual marker at the target position
     # target_position = np.array([0.550655275233520, -1.68862385257615E-17, 0.65])  # Adjust as needed
     target_position = np.array([0.31940916,  -0.21587151,  1.09758974 ])
+    # target_position = np.array([0.58193844, 0.5       ,0.654902])
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
 
@@ -44,23 +45,24 @@ def run_panda(n_steps=10, render=False, goal=True, obstacles=False):
 
     for i in range(n_steps):
         # Get the current joint angles
-        current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][:7]).reshape(7, 1)
+        current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][:7])
 
         # Calculate joint space control action using ArmControl
-        joint_space_action, error = arm_control.task_space_to_joint_space(current_joint_angles, target_position)
+        joint_space_action, error = arm_control.control_action(current_joint_angles, target_position)
 
         # Construct the full control action array
         control_action = np.zeros(env.n())
-        control_action[:7] = joint_space_action.flatten()  # Assuming the first 7 elements are for joint control
+        control_action[:7] = joint_space_action # Assuming the first 7 elements are for joint control
+        # print(control_action[:7])
 
         # Step the environment with the computed control action
         ob, *_ = env.step(control_action)
 
         # Compute the current XYZ position of the end effector
-        xyz = Kinematics().FK(current_joint_angles)
+        # xyz, _ = Kinematics().FK(current_joint_angles)
         # p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=xyz)
-        xyz_history.append(xyz)  # Save XYZ values
-        error_hisotry.append(np.linalg.norm(error))
+        # xyz_history.append(xyz)  # Save XYZ values
+        # error_hisotry.append(np.linalg.norm(error))
         history.append(ob)
 
     env.close()
