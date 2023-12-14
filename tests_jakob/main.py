@@ -68,11 +68,16 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
     history = []
 
-    goal_pos = (1,-3,0)
-    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.2, rgbaColor=[0, 1, 0, 1])
+    goal_pos = (1,3,0)
+    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=goal_pos)
     
-    rrt = RRTStar(obstacles=all_obstacles, iter_max=500, config_goal=goal_pos, step_len=0.8)
+    # Initial action to get initial observation
+    action = np.zeros(env.n())
+    for stp in range(10):
+        ob, *_ = env.step(action)
+
+    rrt = RRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],obstacles=all_obstacles, iter_max=500, config_goal=goal_pos, step_len=0.5)
     rrt.planning()
     path_to_goal = np.array(rrt.find_path())
     rrt.visualize_path(path_to_goal)
@@ -88,7 +93,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
     p.resetDebugVisualizerCamera(cameraDistance=5, cameraYaw=0, cameraPitch=-89.99, cameraTargetPosition=[0, 0, 0])
 
-    pid_controller = PIDBase(kp=[1, 1], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
+    pid_controller = PIDBase(kp=[1, 2], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
     prev_action = np.zeros(env.n())
 
 
@@ -101,7 +106,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
         # Track reached positions
         if pid_controller.count_reached != len(path_to_goal):
-            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=path_to_goal[:,1,:][pid_controller.count_reached], action=prev_action)
+            action = pid_controller.update(current_pos=current_obs[0:3], goal_pos=path_to_goal[:,0,:][pid_controller.count_reached], action=prev_action)
             prev_action = action    
             linear_actions.append(action[0])
             linear_errors.append(pid_controller.error_linear)

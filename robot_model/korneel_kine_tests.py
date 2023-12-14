@@ -33,11 +33,11 @@ class Kinematics:
         ]
         
         # Make sure joint angle is within limits
-        # for i, (angle, (min, max)) in enumerate(zip(joint_angles, self.angle_limits)):
-        #     if not (min <= angle <= max):
-        #         corrected_angle = np.clip(angle, min, max)
-        #         warnings.warn(f"Joint angle {angle} for joint {i+1} is out of limits: {min} to {max}. Setting to {corrected_angle}.")
-        #         joint_angles[i] = corrected_angle
+        for i, (angle, (min, max)) in enumerate(zip(joint_angles, self.angle_limits)):
+            if not (min <= angle <= max):
+                corrected_angle = np.clip(angle, min, max)
+                warnings.warn(f"Joint angle {angle} for joint {i+1} is out of limits: {min} to {max}. Setting to {corrected_angle}.")
+                joint_angles[i] = corrected_angle
         
         self.dh_parameters = [
             [0, 0, 0.333, joint_angles[0]],
@@ -47,7 +47,7 @@ class Kinematics:
             [-0.0825, -np.pi/2, 0.384, joint_angles[4]],
             [0, np.pi/2, 0, joint_angles[5]],
             [0.088, np.pi/2, 0, joint_angles[6]]]
-            # [0, 0, 0.107, 0]]                               #extra for the flange, not for the joints!
+            # [0, 0, 0.107, 0]]                    #extra for the flange, not for the joints!
 
     def transformation_matrix(self, a, alpha, d, q):
         ca = math.cos(alpha)
@@ -162,6 +162,66 @@ class Kinematics:
             print(f"Joint {i + 1}:")
             print("Transformation Matrix:\n", T)
             print(f"Position (x, y, z): ({x}, {y}, {z})\n")
+
+
+from sympy import symbols, Matrix, sin, cos, lambdify
+import numpy as np
+
+class Kinematics2:
+    def __init__(self, joint_angles):
+        if len(joint_angles) != 7:
+            raise ValueError("Incorrect number of joint angles provided. Expected 7.")
+
+        self.joint_angles = joint_angles
+
+        # Create symbolic joint angles
+        self.q = symbols('q1:8')  # q1, q2, ..., q7
+
+        # Define DH parameters using symbolic joint angles
+        self.dh_parameters = [
+            [0, 0, 0.333, self.q[0]],
+            [0, -np.pi/2, 0, self.q[1]],
+            [0, np.pi/2, 0.316, self.q[2]],
+            [0.0825, np.pi/2, 0, self.q[3]],
+            [-0.0825, -np.pi/2, 0.384, self.q[4]],
+            [0, np.pi/2, 0, self.q[5]],
+            [0.088, np.pi/2, 0, self.q[6]]
+        ]
+
+        self.init_symbolic_computations()
+
+    def init_symbolic_computations(self):
+        T = Matrix.eye(4)
+        for parameters in self.dh_parameters:
+            a, alpha, d, theta = parameters
+            Ti = self.symbolic_transformation_matrix(a, alpha, d, theta)
+            T = T * Ti
+
+        # Extract end-effector position (x, y, z)
+        self.end_effector_pos = T[:3, 3]
+
+        # Compute Jacobian
+        self.J = self.end_effector_pos.jacobian(self.q)
+
+        # Create lambda functions for numerical computation
+        self.J_numeric = lambdify(self.q, self.J, 'numpy')
+
+    def symbolic_transformation_matrix(self, a, alpha, d, q):
+        ca = cos(alpha)
+        sa = sin(alpha)
+        cq = cos(q)
+        sq = sin(q)
+
+        return Matrix([
+            [cq, -sq, 0, a],
+            [ca * sq, ca * cq, -sa, -d * sa],
+            [sa * sq, cq * sa, ca, d * ca],
+            [0, 0, 0, 1]
+        ])
+
+    def jacobian(self, joint_angles):
+        return self.J_numeric(*joint_angles)
+
     
 if __name__ == "__main__":
 
@@ -175,6 +235,11 @@ if __name__ == "__main__":
 
     print('jacobian', jacobian) 
     print('jacobian2', jacobian2)
+
+
+    kinematics2 = Kinematics2(joint_angles)
+    jacobian3 = kinematics2.jacobian(joint_angles)
+    print("jacobian3", jacobian3)
 
 
 

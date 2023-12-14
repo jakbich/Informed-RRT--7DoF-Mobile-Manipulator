@@ -1,8 +1,8 @@
-from kinematics import Kinematics
+from arm_kinematics import Kinematics
 import numpy as np
 
 class ArmControl:
-    def __init__(self, kp=0.2, ki=0, kd= 0):
+    def __init__(self, kp=2, ki=0, kd= 0):
         self.kp = kp
         self.ki = ki
         self.kd = kd

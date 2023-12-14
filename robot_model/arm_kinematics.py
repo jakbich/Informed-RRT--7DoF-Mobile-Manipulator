@@ -78,7 +78,7 @@ class Kinematics:
         numjoints = len(self.dh_parameters) - 1  # Excluding the extra for the flange
         J = np.zeros((6, numjoints))
 
-        T_all = [np.eye(4)]  # Start with the identity matrix
+        T_all = [np.eye(4)]
 
         # Calculate transforms from the base frame to each joint
         for i in range(numjoints):
@@ -105,7 +105,7 @@ class Kinematics:
     
 if __name__ == "__main__":
     # Define the joint angles
-    joint_angles = [0, 0, 0, -1, 0, 0, 0]
+    joint_angles = [0.0, 0.0, 0.0, -1.5708, 0.0, 1.8675, 0.0]
 
     kinematics = Kinematics(joint_angles)
 
@@ -113,8 +113,7 @@ if __name__ == "__main__":
     print(f"The end effector position is: {position}")
 
     jacobian_matrix = kinematics.jacobian()
-    print("Jacobian Matrix:")
-    print(jacobian_matrix)
+    print(f"Jacobian Matrix: {jacobian_matrix}")
 
     
 

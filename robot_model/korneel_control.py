@@ -1,4 +1,4 @@
-from korneel_kine_tests import Kinematics
+from korneel_kine_tests import Kinematics, Kinematics2
 import numpy as np
 
 class ArmControl:
@@ -12,7 +12,8 @@ class ArmControl:
     def current_position(self, joint_angles):
         kinematics = Kinematics(joint_angles)
         position = kinematics.forward_kinematics()
-        jacobian = kinematics.jacobian()
+        kinematics2 = Kinematics2(joint_angles)
+        jacobian = kinematics2.jacobian(joint_angles)
         return jacobian, position
     
     def PID(self, target_position, current_position):
