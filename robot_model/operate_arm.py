@@ -3,9 +3,9 @@ import gymnasium as gym
 import numpy as np
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from armcontrol import ArmControl
+from arm_control import ArmControl
 import pybullet as p
-from kinematics import Kinematics
+from robot_model.arm_kinematics import Kinematics
 # from kinematics_3_joints import Kinematics3joints
 
 
