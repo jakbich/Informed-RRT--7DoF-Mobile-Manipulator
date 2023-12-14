@@ -8,7 +8,7 @@ from kinematics import Kinematics
 
 # Import or define ArmControl and Kinematics as needed
 
-def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
+def run_panda(n_steps=10, render=False, goal=True, obstacles=False):
     robots = [
         GenericUrdfReacher(urdf="panda_with_gripper.urdf", mode="vel"),
     ]
@@ -39,6 +39,7 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
 
     history = []
     xyz_history = []  # To store XYZ values
+    error_hisotry = []
     arm_control = ArmControl()
 
     for i in range(n_steps):
@@ -46,7 +47,7 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
         current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][:7]).reshape(7, 1)
 
         # Calculate joint space control action using ArmControl
-        joint_space_action = arm_control.task_space_to_joint_space(current_joint_angles, target_position)
+        joint_space_action, error = arm_control.task_space_to_joint_space(current_joint_angles, target_position)
 
         # Construct the full control action array
         control_action = np.zeros(env.n())
@@ -57,10 +58,9 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
 
         # Compute the current XYZ position of the end effector
         xyz = Kinematics().FK(current_joint_angles)
-        print(xyz)
-        xyz_position = xyz[:3, 3]  # Extract XYZ position from the transformation matrix
-        xyz_history.append(xyz_position)  # Save XYZ values
-
+        # p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=xyz)
+        xyz_history.append(xyz)  # Save XYZ values
+        error_hisotry.append(np.linalg.norm(error))
         history.append(ob)
 
     env.close()
@@ -70,7 +70,7 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
     from mpl_toolkits.mplot3d import Axes3D
 
     xyz_history = np.array(xyz_history)
-    print('xyz_history', xyz_history[500])
+    # print('xyz_history', xyz_history[500])
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.plot(xyz_history[:, 0], xyz_history[:, 1], xyz_history[:, 2])
@@ -78,6 +78,15 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     ax.set_title('Endpoint Position (XYZ) Over Time')
+    plt.show()
+    
+    # Plot the error over time
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(error_hisotry)
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Error')
+    ax.set_title('Error Over Time')
     plt.show()
 
     return history
