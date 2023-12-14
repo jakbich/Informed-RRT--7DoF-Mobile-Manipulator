@@ -10,6 +10,8 @@ class Kinematics:
         if len(joint_angles) != 7:
             raise ValueError("The wrong amount of angles was provided.", len(joint_angles), "instead of 7.")
         
+        self.joint_angles = joint_angles
+
         # Add joint angle limits and speed limits
         self.angle_limits = [
             (-2.8973, 2.8973),
@@ -31,11 +33,11 @@ class Kinematics:
         ]
         
         # Make sure joint angle is within limits
-        for i, (angle, (min, max)) in enumerate(zip(joint_angles, self.angle_limits)):
-            if not (min <= angle <= max):
-                corrected_angle = np.clip(angle, min, max)
-                warnings.warn(f"Joint angle {angle} for joint {i+1} is out of limits: {min} to {max}. Setting to {corrected_angle}.")
-                joint_angles[i] = corrected_angle
+        # for i, (angle, (min, max)) in enumerate(zip(joint_angles, self.angle_limits)):
+        #     if not (min <= angle <= max):
+        #         corrected_angle = np.clip(angle, min, max)
+        #         warnings.warn(f"Joint angle {angle} for joint {i+1} is out of limits: {min} to {max}. Setting to {corrected_angle}.")
+        #         joint_angles[i] = corrected_angle
         
         self.dh_parameters = [
             [0, 0, 0.333, joint_angles[0]],
@@ -114,21 +116,24 @@ class Kinematics:
                         [0, 0, 0, 1]])
     
     def jacobian(self):
-        dh_params = np.array([[0, 0.333, 0, joint_angles[0]],
-                [0, 0, -np.pi / 2, joint_angles[1]],
-                [0, 0.316, np.pi / 2, joint_angles[2]],
-                [0.0825, 0, np.pi / 2, joint_angles[3]],
-                [-0.0825, 0.384, -np.pi / 2, joint_angles[4]],
-                [0, 0, np.pi / 2, joint_angles[5]],
-                [0.088, 0, np.pi / 2, joint_angles[6]]])
+        dh_params = np.array([[0, 0.333, 0, self.joint_angles[0]],
+            [0, 0, -np.pi / 2, self.joint_angles[1]],
+            [0, 0.316, np.pi / 2, self.joint_angles[2]],
+            [0.0825, 0, np.pi / 2, self.joint_angles[3]],
+            [-0.0825, 0.384, -np.pi / 2, self.joint_angles[4]],
+            [0, 0, np.pi / 2, self.joint_angles[5]],
+            [0.088, 0, np.pi / 2, self.joint_angles[6]],
+            [0, 0.107, 0, 0],
+            [0, 0, 0, -np.pi / 4],
+            [0.0, 0.1034, 0, 0]], dtype=np.float64)
 
         T_EE = np.identity(4)
-        for i in range(7):
+        for i in range(7 + 3):
             T_EE = T_EE @ self.get_tf_mat(i, dh_params)
 
         J = np.zeros((6, 10))
         T = np.identity(4)
-        for i in range(7):
+        for i in range(7 + 3):
             T = T @ self.get_tf_mat(i, dh_params)
 
             p = T_EE[:3, 3] - T[:3, 3]
