@@ -3,8 +3,8 @@ import numpy as np
 import pybullet as p
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from one_joint_control import ArmControl
-from one_joint_kinematics import Kinematics as one_joint_kinematics
+from control import ArmControl
+from kinematics import Kinematics
 
 # Import or define ArmControl and Kinematics as needed
 
@@ -39,15 +39,27 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
 
     history = []
     xyz_history = []  # To store XYZ values
-    for i in range(n_steps):
-        
-        control_action = np.zeros(env.n())
-        control_action[3] = ArmControl().control_action(current_joint_angles, target_position)[0]
+    arm_control = ArmControl()
 
+    for i in range(n_steps):
+        # Get the current joint angles
+        current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][:7]).reshape(7, 1)
+
+        # Calculate joint space control action using ArmControl
+        joint_space_action = arm_control.task_space_to_joint_space(current_joint_angles, target_position)
+
+        # Construct the full control action array
+        control_action = np.zeros(env.n())
+        control_action[:7] = joint_space_action.flatten()  # Assuming the first 7 elements are for joint control
+
+        # Step the environment with the computed control action
         ob, *_ = env.step(control_action)
-        current_joint_angles = ob['robot_0']['joint_state']['position'][:7]
-        xyz = one_joint_kinematics(current_joint_angles).forward_kinematics()
-        xyz_history.append(xyz)  # Save XYZ values
+
+        # Compute the current XYZ position of the end effector
+        xyz = Kinematics().FK(current_joint_angles)
+        print(xyz)
+        xyz_position = xyz[:3, 3]  # Extract XYZ position from the transformation matrix
+        xyz_history.append(xyz_position)  # Save XYZ values
 
         history.append(ob)
 
