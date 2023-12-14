@@ -3,7 +3,7 @@ import numpy as np
 import pybullet as p
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from armcontrol import ArmControl
+from korneel_control import ArmControl
 
 
 # Import or define ArmControl and Kinematics as needed

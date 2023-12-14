@@ -74,7 +74,7 @@ class Kinematics:
 
         return x, y, z
 
-    def jacobian(self):
+    def jacobian2(self):
         numjoints = len(self.dh_parameters) 
         J = np.zeros((6, numjoints))
 
@@ -101,6 +101,44 @@ class Kinematics:
 
         return J
     
+    def get_tf_mat(self, i, dh):
+        a = dh[i][0]
+        d = dh[i][1]
+        alpha = dh[i][2]
+        theta = dh[i][3]
+        q = theta
+
+        return np.array([[np.cos(q), -np.sin(q), 0, a],
+                        [np.sin(q) * np.cos(alpha), np.cos(q) * np.cos(alpha), -np.sin(alpha), -np.sin(alpha) * d],
+                        [np.sin(q) * np.sin(alpha), np.cos(q) * np.sin(alpha), np.cos(alpha), np.cos(alpha) * d],
+                        [0, 0, 0, 1]])
+    
+    def jacobian(self):
+        dh_params = np.array([[0, 0.333, 0, joint_angles[0]],
+                [0, 0, -np.pi / 2, joint_angles[1]],
+                [0, 0.316, np.pi / 2, joint_angles[2]],
+                [0.0825, 0, np.pi / 2, joint_angles[3]],
+                [-0.0825, 0.384, -np.pi / 2, joint_angles[4]],
+                [0, 0, np.pi / 2, joint_angles[5]],
+                [0.088, 0, np.pi / 2, joint_angles[6]]])
+
+        T_EE = np.identity(4)
+        for i in range(7):
+            T_EE = T_EE @ self.get_tf_mat(i, dh_params)
+
+        J = np.zeros((6, 10))
+        T = np.identity(4)
+        for i in range(7):
+            T = T @ self.get_tf_mat(i, dh_params)
+
+            p = T_EE[:3, 3] - T[:3, 3]
+            z = T[:3, 2]
+
+            J[:3, i] = np.cross(z, p)
+            J[3:, i] = z
+
+        return J[:, :7]
+
     def debug_transformations(self):
         T = np.eye(4)
         transformation_matrices = []
@@ -125,7 +163,13 @@ if __name__ == "__main__":
     joint_angles = [0.0, 0.0, 0.0, -1.5708, 0.0, 1.8675, 0.0]
 
     kinematics = Kinematics(joint_angles)
-    kinematics.debug_transformations()
+    # kinematics.debug_transformations()
+
+    jacobian = kinematics.jacobian()
+    jacobian2 = kinematics.jacobian2()
+
+    print('jacobian', jacobian) 
+    print('jacobian2', jacobian2)
 
 
 
