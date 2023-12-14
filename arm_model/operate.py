@@ -3,7 +3,8 @@ import numpy as np
 import pybullet as p
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from arm_control import ArmControl
+from control import ArmControl
+from kinematics import Kinematics
 
 
 def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
@@ -16,36 +17,34 @@ def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
         render=render,
         observation_checking=False,
     )
-    action = np.zeros(env.n()) # arm still
+    action = np.zeros(env.n())  # No action to keep the arm still
     ob = env.reset()
 
     ob, *_ = env.step(action)
     current_joint_angles = ob['robot_0']['joint_state']['position'][:7]
-    print('current_joint_angles' , current_joint_angles)
 
-
-    # Add axes at the origin
+    # Add axes at the origin (you can change the position as needed)
     origin = [0, 0, 0]
-    axis_length = 10.0
+    axis_length = 10.0  # Length of each axis
     p.addUserDebugLine(origin, [axis_length, 0, 0], [1, 0, 0], 2.0)  # X-axis in red
     p.addUserDebugLine(origin, [0, axis_length, 0], [0, 1, 0], 2.0)  # Y-axis in green
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
 
-    # Add a visual marker at the target position
-    target_position = np.array([0.58193844, 0. ,        0.654902])  
+    # target_position = np.array([-0.31940916,  0.21587151,  1.09758974 ])
+    target_position = np.array([0.58193844, 0.5       ,0.654902])
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
 
     history = []
+    arm_control = ArmControl()
+
     for i in range(n_steps):
-        # Control the endpoint here using inverse kinematics
-        joint_action = ArmControl().task_space_to_joint_space(current_joint_angles, target_position)
-        padded_joint_action = np.pad(joint_action, (2, 12 - len(joint_action) - 2), 'constant')
-
-        ob, *_ = env.step(padded_joint_action)
-        current_joint_angles = ob['robot_0']['joint_state']['position'][:7]
+        current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][:7])
+        joint_space_action = arm_control.control_action(current_joint_angles, target_position).flatten()
+        control_action = np.zeros(env.n())
+        control_action[:7] = joint_space_action
+        ob, *_ = env.step(control_action)
         history.append(ob)
-
     env.close()
     return history
 
