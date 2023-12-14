@@ -23,13 +23,13 @@ class ArmControl:
         # Apply PID control
         control = np.array([self.pid_x(error[0]), self.pid_y(error[1]), self.pid_z(error[2])])
 
-        return control
+        return control, error
 
     def task_space_to_joint_space(self, joint_angles, target_position):
-        control_action = self.control_action(joint_angles, target_position)
+        control_action, error = self.control_action(joint_angles, target_position)
 
         # Calculate Jacobian
-        J = self.kinematics.J_lamb(*joint_angles.flatten())
+        J = self.kinematics.jacobian(joint_angles.flatten())
 
         # Extract the relevant portion of the Jacobian (for X, Y, Z control)
         J_xyz = J[:3, :]  # Assuming the first 3 rows correspond to X, Y, Z translation
@@ -37,9 +37,11 @@ class ArmControl:
         # Convert task space control action to joint space
         joint_action = np.linalg.pinv(J_xyz) @ control_action
 
+        print("Joint action: ", joint_action)
+
         # Apply speed limits
         speed_limits = self.kinematics.speed_limits
         for idx, limit in enumerate(speed_limits):
             joint_action[idx] = np.clip(joint_action[idx], -limit[0], limit[0])
 
-        return joint_action
+        return joint_action, error
