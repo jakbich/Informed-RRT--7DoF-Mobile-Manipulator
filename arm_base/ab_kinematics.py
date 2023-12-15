@@ -62,8 +62,8 @@ class Kinematics:
         position = A.flatten()[-3:]
         return position, A, J
 
-    def base_to_arm(self, target_position, base_position):
-        rotation_angle_z = -np.pi/2
+    def base_to_arm(self, target_position, base_position, theta):
+        rotation_angle_z = theta
         translation_x = 0
         translation_y = 0.19
         translation_z = 0.64
