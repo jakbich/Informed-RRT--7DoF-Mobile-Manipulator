@@ -61,3 +61,32 @@ class Kinematics:
         J = J/np.linalg.norm(J)
         position = A.flatten()[-3:]
         return position, A, J
+    
+    def create_transformation_matrix(target_position):
+        rotation_angle_z = -np.pi / 2
+        translation_x = 0
+        translation_y = 0.1
+        translation_z = 0.2
+        transformation_matrix = np.identity(4)
+
+        cos_a = np.cos(rotation_angle_z)
+        sin_a = np.sin(rotation_angle_z)
+        Rz = np.array([[cos_a, -sin_a, 0, 0],
+                    [sin_a, cos_a, 0, 0],
+                    [0, 0, 1, 0],
+                    [0, 0, 0, 1]])
+
+        transformation_matrix[0, 3] = translation_x
+        transformation_matrix[1, 3] = translation_y
+        transformation_matrix[2, 3] = translation_z
+
+        # Combine rotation and translation
+        transformation_matrix = np.dot(Rz, transformation_matrix)
+
+        # Convert the target_position to a 4x1 vector
+        target_vector = np.append(target_position, 1)
+
+        # Apply the transformation
+        target_position_transformed = np.dot(transformation_matrix, target_vector)
+
+        return target_position_transformed[:-1] 

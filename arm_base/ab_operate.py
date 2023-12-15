@@ -34,7 +34,8 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
 
     arm_control = ArmControl()
 
-    target_position = np.array([0.78193844, 0.3       ,0.454902])
+    target_position_temp = np.array([0.78193844, 0.3       ,0.454902])
+    target_position = 
 
     # -------------------- SHAPE VISUALIZATION --------------------
     # Add axes at the origin (you can change the position as needed)
