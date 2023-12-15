@@ -52,6 +52,24 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
         all_obstacles = create_walls(env, walls, density, sphere_radius)
             
 
+    if obstacle_setup == 'advanced':
+        
+        sphere_radius = 0.2
+        
+        walls = [
+        # Boxes
+        [[-2.5, -3, 0.5], 1, 1, 1],  # Box 1
+        [[2, 2, -0.5], 1, 1, 1],  # Box 2
+        [[0, -1.5, 0.5], 1.5, 1.5, 1],  # Box 3
+
+        [[3.5, -1.5, 0.5], 2, 0.3, 1],  # Horizontal wall
+
+
+        # Additional walls to create paths
+        
+        ]
+        all_obstacles = create_walls(env, walls, density, sphere_radius)
+
 
 
     if obstacle_setup == 'hard':
@@ -59,7 +77,7 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
         sphere_radius = 0.15
             # Wall specifications [position, length, width, height]
         walls = [
-            [[0, -1.0, 0.5], 10.0, 0.2, 1],
+            [[0, -1.0, 0.5], 10.0, 0.2, 1],s
             [[0, 1.0, 0.5], 10.0, 0.2, 1],
             [[0, -3.0, 0.5], 10.0, 0.2,1],
             [[0, 3.0, 0.5], 10.0, 0.2, 1],

@@ -53,14 +53,14 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     
 
     # Filling with obstacles and creating the list with al spheres [x,y,z,radius]
-    all_obstacles = np.array(fill_env_with_obstacles(env, 'medium',1))
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'advanced',1))
 
     ####RRT#####
 
     history = []
 
     # Goal for medium env (1.5,-4.5,0)
-    goal_pos = (1.5,4.9, 0)
+    goal_pos = (1,-3, 0)
 
     # PLottin the goal
     visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
@@ -75,9 +75,10 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
     rrt_informed = InformedRRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],
                   obstacles=all_obstacles, iter_max=500, 
-                  config_goal=goal_pos, step_len=0.5,
+                  config_goal=goal_pos, step_len=0.7,
                   sampling_range=10, rewire_radius=1)
     rrt_informed.planning()
+    
     path_to_goal = np.array(rrt_informed.find_path())
     
 
@@ -87,7 +88,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     if len(path_to_goal) > 3:
         interpolated_path = interpolate_path(path_to_goal, max_dist=4.0)
         path_to_goal_smooth = path_smoother(interpolated_path, total_cost_path=total_cost_path)
-        rrt_informed.visualize_path(path_to_goal[:,0,:])
+        rrt_informed.visualize_path(path_to_goal[:,0,:], color = [1,0,0])
         rrt_informed.visualize_path(path_to_goal_smooth, spline=True)
 
         # Make path_to_goal sparse (every 10th point) while keeping the last point
@@ -108,7 +109,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     ###/RRT####
 
 
-    print(f"Initial observation : {ob}")
+    #print(f"Initial observation : {ob}")
     linear_actions = []  # List to store action[0] values
     linear_errors = []
     final_reach_sent = False

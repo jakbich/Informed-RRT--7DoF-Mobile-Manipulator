@@ -42,6 +42,7 @@ class RRTStar:
         # Radius for rewiring, how far to look for better paths
         self.rewire_radius = rewire_radius
 
+
         # Visual shape for points
         self.visual_shape_nodes = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0, 0, 1])
         self.visual_shape_spline = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[0, 1, 0, 1])
@@ -114,7 +115,7 @@ class RRTStar:
         nearest_node_to_goal = self.find_nearest_node(self.config_goal)
         self.add_node(np.array(self.config_goal), nearest_node_to_goal)
         nearby_nodes = self.find_nearby_nodes(self.config_goal, self.rewire_radius)
-        self.rewire(np.array(self.config_goal), nearby_nodes)
+        self.rewire(np.array(self.config_goal), nearby_nodes)        
 
 
     def find_nearest_node(self, new_node):
@@ -193,10 +194,10 @@ class RRTStar:
     def find_path(self):
         path = []
         current_node = tuple(self.config_goal)
+
         while current_node != tuple(self.config_start):
-            
+        
             parent_node = self.parent[current_node]
-            
             path.append((current_node,parent_node))
             current_node = parent_node
         
@@ -205,7 +206,7 @@ class RRTStar:
         path.reverse()  # Reverse the path to start from the beginning
         return path
     
-    def visualize_path(self, path, spline=False):
+    def visualize_path(self, path, spline=False, color=[1, 0, 0]):
 
         if spline:
             for i in range(len(path)-1):
@@ -218,12 +219,11 @@ class RRTStar:
 
 
         else:
-            print("path: ", path)   
             for i in range(len(path)-1):
                 # Convert list to tuple for concatenation
                 start_point, end_point = path[i], path[i+1]
                 offset = (0, 0, 0.01)
-                p.addUserDebugLine(np.array(start_point) + offset, np.array(end_point) + offset, [1, 0, 0], lineWidth=10)
+                p.addUserDebugLine(np.array(start_point) + offset, np.array(end_point) + offset, color, lineWidth=10)
 
 
 
@@ -247,25 +247,13 @@ class InformedRRTStar (RRTStar):
         self.best_path_cost = float('inf')  # Initialize the best path cost
         self.ellipsoid = None  # Placeholder for the ellipsoid data
 
-    def sample_new_node_ellipsoid(self):
-        """
-        Sample a new node in the configuration space.
-        """
-        for i in range(100):
-            random_node = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,0], size=3)
-            if not self.check_collision(random_node):
-                # Return (x,y,0) if valid point
-                return random_node
-            
-
-        for i in range(100):
-            random_node = np.random.uniform()
-
-
-    
-
     def planning(self):
         super().planning()
+        # Visualize first path
+        first_path = np.array(self.find_path())
+        
+        self.visualize_path(first_path[:,0,:], color=[0, 0, 1])
+
         self.calculate_ellipsoid()
         self.planning_ellipsoid()
 
@@ -273,10 +261,9 @@ class InformedRRTStar (RRTStar):
         """ 
         Main function for RRT* algorithm
         """
-        print ("\nStarting planning ellipsoid\n")
-
         paths_found = 0
-        while paths_found < 5:
+
+        for _ in range(1000):
             new_node = self.sample_new_node_ellipsoid()
             if new_node is not None:
                 nearby_nodes = self.find_nearby_nodes(new_node, self.rewire_radius)
@@ -284,25 +271,12 @@ class InformedRRTStar (RRTStar):
                 if best_parent is not None:
                     self.add_node(new_node, best_parent)
                     self.rewire(new_node, nearby_nodes)
-            if self.is_goal_reached(self.node_list[-1]):
-                paths_found += 1
-                print(f"Found path {paths_found}")
-                self.calculate_ellipsoid()
-                self.planning_ellipsoid()
-
-
-        # Last connection to goal node
-        nearest_node_to_goal = self.find_nearest_node(self.config_goal)
-        self.add_node(np.array(self.config_goal), nearest_node_to_goal)
-        nearby_nodes = self.find_nearby_nodes(self.config_goal, self.rewire_radius)
-        self.rewire(np.array(self.config_goal), nearby_nodes)
-
 
     def sample_new_node_ellipsoid(self):
         """
         Sample a new node in the ellipsoidal space
         """
-        for i in range(100): # Try 100 times to sample a valid config.
+        for i in range(600): # Try 100 times to sample a valid config.
             random_node  = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,0], size=3)
             if not self.check_collision(random_node) and self.is_point_in_ellipse(random_node[0], random_node[1], self.distance_start_goal, self.width_ellipse, self.config_start, self.direction_vector):
                 # Return (x,y,0) if valid point and inside of the ellipsoid shape
@@ -347,7 +321,7 @@ class InformedRRTStar (RRTStar):
 
 
         # Plot all points in the ellipse
-        visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.06, rgbaColor=[1, 0.2, 0.5, 1])
+        visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[0.3, 0.5, 0.3, 1])
 
         for i in range(len(t)):
             p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_goal, basePosition=[ellipsoid_points[0, i], ellipsoid_points[1, i], 0])
