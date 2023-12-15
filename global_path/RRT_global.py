@@ -267,56 +267,130 @@ class InformedRRTStar (RRTStar):
     def planning(self):
         super().planning()
         self.calculate_ellipsoid()
+        self.planning_ellipsoid()
+
+    def planning_ellipsoid(self):
+        """ 
+        Main function for RRT* algorithm
+        """
+        print ("\nStarting planning ellipsoid\n")
+
+        paths_found = 0
+        while paths_found < 5:
+            new_node = self.sample_new_node_ellipsoid()
+            if new_node is not None:
+                nearby_nodes = self.find_nearby_nodes(new_node, self.rewire_radius)
+                best_parent, min_cost = self.choose_best_parent(new_node, nearby_nodes)
+                if best_parent is not None:
+                    self.add_node(new_node, best_parent)
+                    self.rewire(new_node, nearby_nodes)
+            if self.is_goal_reached(self.node_list[-1]):
+                paths_found += 1
+                print(f"Found path {paths_found}")
+                self.calculate_ellipsoid()
+                self.planning_ellipsoid()
+
+
+        # Last connection to goal node
+        nearest_node_to_goal = self.find_nearest_node(self.config_goal)
+        self.add_node(np.array(self.config_goal), nearest_node_to_goal)
+        nearby_nodes = self.find_nearby_nodes(self.config_goal, self.rewire_radius)
+        self.rewire(np.array(self.config_goal), nearby_nodes)
+
+
+    def sample_new_node_ellipsoid(self):
+        """
+        Sample a new node in the ellipsoidal space
+        """
+        for i in range(100): # Try 100 times to sample a valid config.
+            random_node  = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,0], size=3)
+            if not self.check_collision(random_node) and self.is_point_in_ellipse(random_node[0], random_node[1], self.distance_start_goal, self.width_ellipse, self.config_start, self.direction_vector):
+                # Return (x,y,0) if valid point and inside of the ellipsoid shape
+                return random_node
 
     def calculate_ellipsoid(self):
         """
         Calculate the ellipsoid data.
         """
         # Find the best path
-        path_to_goal = self.find_path()
+        self.path_to_goal = self.find_path()
         # Calculate the cost of the best path
-        self.path_to_goal_cost = self.calculate_path_cost(path_to_goal)
+        self.path_to_goal_cost = self.calculate_path_cost(self.path_to_goal)
         
         # Create an initial ellipsoid that has the goal and start as its foci
-        direction_vector = np.array(self.config_goal) - np.array(self.config_start)
-        distance_start_goal = np.linalg.norm(direction_vector)
+        self.direction_vector = np.array(self.config_goal) - np.array(self.config_start)
+        self.distance_start_goal = np.linalg.norm(self.direction_vector)
         
-        width_ellipse = distance_start_goal / 2
-
-        # Draw ellipsoid
-        t = np.linspace(0, 2 * np.pi, 60)
-        ellipsoid_points = np.array([distance_start_goal * np.cos(t), width_ellipse * np.sin(t)])
-
+        self.width_ellipse = self.distance_start_goal / 2
 
         # Rotate and translate the ellipse
-        rotation_angle = np.arctan2(direction_vector[1], direction_vector[0])
-        rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
+        rotation_angle = np.arctan2(self.direction_vector[1], self.direction_vector[0])
+        self.rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
                                     [np.sin(rotation_angle), np.cos(rotation_angle)]])
         
-        ellipsoid_points = np.matmul(rotation_matrix, ellipsoid_points)
-        ellipsoid_points[0, :] += self.config_start[0] + direction_vector[0] / 2
-        ellipsoid_points[1, :] += self.config_start[1] + direction_vector[1] / 2
 
-        
+        # Adjust the ellipse until all points in the path are inside the ellipse
+        self.adjust_ellipsoid()
+        # Draw the ellipsoid
+        self.draw_ellipsoid()
 
-    
+
+    def draw_ellipsoid(self):
+
+        # Draw ellipsoid
+        t = np.linspace(0, 2 * np.pi, 100)
+        ellipsoid_points = np.array([self.distance_start_goal * np.cos(t), self.width_ellipse * np.sin(t)])
+
+        ellipsoid_points = np.matmul(self.rotation_matrix, ellipsoid_points)
+        ellipsoid_points[0, :] += self.config_start[0] + self.direction_vector[0] / 2
+        ellipsoid_points[1, :] += self.config_start[1] + self.direction_vector[1] / 2
+
 
         # Plot all points in the ellipse
-        visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0.7, 0.5, 1])
+        visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.06, rgbaColor=[1, 0.2, 0.5, 1])
 
         for i in range(len(t)):
             p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_goal, basePosition=[ellipsoid_points[0, i], ellipsoid_points[1, i], 0])
 
 
-
-    def is_point_in_ellipse(point_x, point_y, distance_start_goal, width_ellipse):
+    def is_point_in_ellipse(self, point_x, point_y, distance_start_goal, width_ellipse, config_start, direction_vector):
         """
-        Check if the point (x, y) is inside the ellipse with semi-major axis 'a' and semi-minor axis 'b'.
+        Check if the point (x, y) is inside the rotated and shifted ellipse.
 
         :param point_x: x-coordinate of the point
         :param point_y: y-coordinate of the point
         :param distance_start_goal: length of the semi-major axis of the ellipse
         :param width_ellipse: length of the semi-minor axis of the ellipse
+        :param config_start: starting point of the ellipse
+        :param direction_vector: vector from start to goal of the ellipse
         :return: True if the point is inside the ellipse, False otherwise
         """
-        return (point_x**2 / distance_start_goal**2) + (point_y**2 / width_ellipse**2) <= 1
+        # Translate the point back
+        translated_point_x = point_x - (config_start[0] + direction_vector[0] / 2)
+        translated_point_y = point_y - (config_start[1] + direction_vector[1] / 2)
+
+        # Calculate the rotation angle
+        rotation_angle = np.arctan2(direction_vector[1], direction_vector[0])
+        # Create the inverse rotation matrix
+        inverse_rotation_matrix = np.array([[np.cos(rotation_angle), np.sin(rotation_angle)],
+                                            [-np.sin(rotation_angle), np.cos(rotation_angle)]])
+        # Rotate the point back
+        rotated_point = np.matmul(inverse_rotation_matrix, np.array([translated_point_x, translated_point_y]))
+
+        # Check if the point is inside the standard ellipse
+        return (rotated_point[0]**2 / distance_start_goal**2) + (rotated_point[1]**2 / width_ellipse**2) <= 1
+
+
+    def adjust_ellipsoid(self):
+        # Inside calculate_ellipsoid method
+        counter_in_elipse = 0
+        while counter_in_elipse < len(self.path_to_goal):
+            counter_in_elipse = 0
+            for i in range(len(self.path_to_goal)):
+                if not self.is_point_in_ellipse(self.path_to_goal[i][0][0], self.path_to_goal[i][0][1], self.distance_start_goal, self.width_ellipse, self.config_start, self.direction_vector):
+                    print(f"Point {i} not in ellipse")
+                    self.width_ellipse *= 1.1
+                else:
+                    counter_in_elipse += 1
+
+        

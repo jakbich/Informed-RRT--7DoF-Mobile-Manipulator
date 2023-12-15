@@ -60,7 +60,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     history = []
 
     # Goal for medium env (1.5,-4.5,0)
-    goal_pos = (1.5,-4.5, 0)
+    goal_pos = (1.5,4.9, 0)
 
     # PLottin the goal
     visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
@@ -75,8 +75,8 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
     rrt_informed = InformedRRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],
                   obstacles=all_obstacles, iter_max=500, 
-                  config_goal=goal_pos, step_len=1.5,
-                  sampling_range=10, rewire_radius=3)
+                  config_goal=goal_pos, step_len=0.5,
+                  sampling_range=10, rewire_radius=1)
     rrt_informed.planning()
     path_to_goal = np.array(rrt_informed.find_path())
     
