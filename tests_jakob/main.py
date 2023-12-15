@@ -36,10 +36,6 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
         dt=0.01, robots=robots, render=render
     )
     
-    
-    print("\nStarting simulation...\n--------------------------------\n\n")
-
-
 
     # Add axes at the origin (you can change the position as needed)
     origin = [0, 0, 0]
