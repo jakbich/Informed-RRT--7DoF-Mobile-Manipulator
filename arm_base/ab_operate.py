@@ -8,7 +8,7 @@ from ab_control import ArmControl
 from ab_kinematics import Kinematics
 
 
-def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
+def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     robots = [
         GenericDiffDriveRobot(
             urdf="albert.urdf",
@@ -17,7 +17,7 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
             castor_wheels=["rotacastor_right_joint", "rotacastor_left_joint"],
             wheel_radius = 0.08,
             wheel_distance = 0.494,
-            spawn_rotation = 0,
+            spawn_rotation = np.pi/2,       # in radians
             facing_direction = '-y',
         ),
     ]
@@ -38,9 +38,15 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
 
 
     # target_position_temp = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
-    target_position = np.array([-0.5, -0.2, 0.7])
+    target_position = np.array([[0.5903106, -0.3, 1.02971885]])
+    target_position_homogeneous = np.append(target_position, 1) 
 
-    arm_target_position = kinematics.base_to_arm(target_position, base_position=np.array([0,0,0]))
+    # Add target position as a red sphere
+    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[1, 1, 0, 1])
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
+
+
+
 
     # -------------------- SHAPE VISUALIZATION --------------------
     # Add axes at the origin (you can change the position as needed)
@@ -50,9 +56,7 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
     p.addUserDebugLine(origin, [0, axis_length, 0], [0, 1, 0], 2.0)  # Y-axis in green
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
 
-    # Add target position as a red sphere
-    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position)
+
 
     # # Add arm reach
     # sphere_radius = 0.855
@@ -72,8 +76,15 @@ def run_albert(n_steps=1000, render=False, goal=True, obstacles=True):
     history = []
     for _ in range(n_steps):
         current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][3:10])
+        current_base_orientation = np.array(ob['robot_0']['joint_state']['position'][2])
+        # Transform target position from world to arm coordinates
+        T_world_to_arm = kinematics.transform_world_to_arm(current_base_orientation)
+        arm_target_position_homogeneous = np.dot(T_world_to_arm, target_position_homogeneous)
+        arm_target_position = arm_target_position_homogeneous[:3]
+
         joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
         control_action = np.zeros(env.n())
+        control_action[1] = -0.2
         control_action[2:9] = joint_space_action
         ob, *_ = env.step(control_action)
         history.append(ob)

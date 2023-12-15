@@ -70,7 +70,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     goal_pos = (2,2, 0)
 
     target_position = np.array((0.4,0.4,0.9))
-    draw_target_position = np.array(np.array(goal_pos) + target_position)
+    draw_target_position = np.array(goal_pos) + target_position
     
 
     # PLottin the goal
@@ -154,8 +154,9 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
                 print("Final position reached!")
                 break
     
-    arm_target_position = kinematics.base_to_arm(target_position, base_position=current_position, theta=current_position[2])
-
+    arm_target_position = kinematics.base_to_arm(target_position, base_position=current_position[:2], theta=current_position[2])
+    print("Arm target position: ", arm_target_position)
+    
     for _ in range(n_steps):
         current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][3:10])
         joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
