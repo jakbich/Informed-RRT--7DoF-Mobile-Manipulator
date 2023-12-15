@@ -239,3 +239,84 @@ class RRTStar:
             total_cost += self.distance(start_node, end_node)
         return total_cost
 
+class InformedRRTStar (RRTStar):
+    def __init__(self, config_start = (0,0,0), config_goal = (0,0,0), step_len = 0.1,iter_max = 100, obstacles= [], sampling_range=5, rewire_radius= 2):
+        super().__init__(config_start, config_goal, step_len, iter_max, obstacles, sampling_range, rewire_radius)
+
+        # Ellipsoid data
+        self.best_path_cost = float('inf')  # Initialize the best path cost
+        self.ellipsoid = None  # Placeholder for the ellipsoid data
+
+    def sample_new_node_ellipsoid(self):
+        """
+        Sample a new node in the configuration space.
+        """
+        for i in range(100):
+            random_node = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,0], size=3)
+            if not self.check_collision(random_node):
+                # Return (x,y,0) if valid point
+                return random_node
+            
+
+        for i in range(100):
+            random_node = np.random.uniform()
+
+
+    
+
+    def planning(self):
+        super().planning()
+        self.calculate_ellipsoid()
+
+    def calculate_ellipsoid(self):
+        """
+        Calculate the ellipsoid data.
+        """
+        # Find the best path
+        path_to_goal = self.find_path()
+        # Calculate the cost of the best path
+        self.path_to_goal_cost = self.calculate_path_cost(path_to_goal)
+        
+        # Create an initial ellipsoid that has the goal and start as its foci
+        direction_vector = np.array(self.config_goal) - np.array(self.config_start)
+        distance_start_goal = np.linalg.norm(direction_vector)
+        
+        width_ellipse = distance_start_goal / 2
+
+        # Draw ellipsoid
+        t = np.linspace(0, 2 * np.pi, 60)
+        ellipsoid_points = np.array([distance_start_goal * np.cos(t), width_ellipse * np.sin(t)])
+
+
+        # Rotate and translate the ellipse
+        rotation_angle = np.arctan2(direction_vector[1], direction_vector[0])
+        rotation_matrix = np.array([[np.cos(rotation_angle), -np.sin(rotation_angle)],
+                                    [np.sin(rotation_angle), np.cos(rotation_angle)]])
+        
+        ellipsoid_points = np.matmul(rotation_matrix, ellipsoid_points)
+        ellipsoid_points[0, :] += self.config_start[0] + direction_vector[0] / 2
+        ellipsoid_points[1, :] += self.config_start[1] + direction_vector[1] / 2
+
+        
+
+    
+
+        # Plot all points in the ellipse
+        visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0.7, 0.5, 1])
+
+        for i in range(len(t)):
+            p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_goal, basePosition=[ellipsoid_points[0, i], ellipsoid_points[1, i], 0])
+
+
+
+    def is_point_in_ellipse(point_x, point_y, distance_start_goal, width_ellipse):
+        """
+        Check if the point (x, y) is inside the ellipse with semi-major axis 'a' and semi-minor axis 'b'.
+
+        :param point_x: x-coordinate of the point
+        :param point_y: y-coordinate of the point
+        :param distance_start_goal: length of the semi-major axis of the ellipse
+        :param width_ellipse: length of the semi-minor axis of the ellipse
+        :return: True if the point is inside the ellipse, False otherwise
+        """
+        return (point_x**2 / distance_start_goal**2) + (point_y**2 / width_ellipse**2) <= 1
