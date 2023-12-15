@@ -7,14 +7,19 @@ class ArmControl:
         self.kd = kd
         self.errors = [0]
         self.kinematics = Kinematics()
-
+    
     def control_action(self, joint_angles, target_position):
         _, A, jacobian = self.kinematics.matrices(joint_angles)
         multi_dim_position = np.vstack([np.eye(3).reshape(-1, 1), target_position.reshape(-1, 1)])
         error = multi_dim_position - A
-        d_e = error - self.errors[-1]
-        task_space_velocity = self.kp * error + self.kd * d_e
-        joint_action = np.linalg.pinv(jacobian) @ task_space_velocity
-        joint_action = np.clip(joint_action, -self.kinematics.speed, self.kinematics.speed)
+        error_magnitude = np.linalg.norm(error)
+
+        if error_magnitude < 1:
+            joint_action = np.zeros(jacobian.shape[1])
+        else:
+            d_e = error - self.errors[-1]
+            task_space_velocity = self.kp * error + self.kd * d_e
+            joint_action = np.linalg.pinv(jacobian) @ task_space_velocity
+            joint_action = np.clip(joint_action, -self.kinematics.speed, self.kinematics.speed)
 
         return joint_action
