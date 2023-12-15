@@ -44,7 +44,6 @@ class RRTStar:
 
         # Visual shape for points
         self.visual_shape_nodes = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0, 0, 1])
-        self.visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
         self.visual_shape_spline = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[0, 1, 0, 1])
     
     def sample_new_node(self):

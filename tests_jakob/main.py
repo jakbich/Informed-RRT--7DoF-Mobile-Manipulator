@@ -66,6 +66,12 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     # Goal for medium env (1.5,-4.5,0)
     goal_pos = (1.5,-4.5, 0)
 
+    # PLottin the goal
+    visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_goal, basePosition=goal_pos)
+    
+
+
     # Initial action to get initial observation
     action = np.zeros(env.n())
     for stp in range(10):
@@ -77,9 +83,6 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
                   sampling_range=10, rewire_radius=3)
     rrt.planning()
     path_to_goal = np.array(rrt.find_path())
-    
-    # Plotting the goal
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=rrt.visual_shape_goal, basePosition=goal_pos)
     
 
     # total_cost_path = sum(rrt.cost.values())
