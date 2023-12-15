@@ -60,4 +60,6 @@ class Kinematics:
         J = self.J_lamb(*joint_positions)
         J = J/np.linalg.norm(J)
         position = A.flatten()[-3:]
+        print("POSITION", position)
         return position, A, J
+    
