@@ -63,10 +63,10 @@ class Kinematics:
         position = A.flatten()[-3:]
         return position, A, J
 
-    def transform_world_to_arm(self, rotation_angle_z=0):
+    def transform_world_to_arm(self, rotation_angle_z=0, base_position=np.array([0,0])):
         # Create translation matrix
-        translation_x = -0.19
-        translation_y = 0
+        translation_x = -0.19 + base_position[0]
+        translation_y = 0 + base_position[1]
         translation_z = 0.64
         translation_matrix = np.array([
             [1, 0, 0, translation_x],

@@ -67,9 +67,11 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     history = []
 
     # Goal for medium env (1.5,-4.5,0)
-    goal_pos = (2,2, 0)
+    goal_pos = (2,2,0)
 
-    target_position = np.array((0.4,0.4,0.9))
+    target_position = np.array([[0.5903106, -0.3, 1.02971885]])
+    target_position_homogeneous = np.append(target_position, 1) 
+
     draw_target_position = np.array(goal_pos) + target_position
     
 
@@ -154,11 +156,18 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
                 print("Final position reached!")
                 break
     
-    arm_target_position = kinematics.base_to_arm(target_position, base_position=current_position[:2], theta=current_position[2])
-    print("Arm target position: ", arm_target_position)
     
     for _ in range(n_steps):
         current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][3:10])
+        current_base_orientation = np.array(ob['robot_0']['joint_state']['position'][2])
+        current_base_position = np.array(ob['robot_0']['joint_state']['position'][:2])
+
+        # Transform target position from world to arm coordinates
+        print(current_base_position)
+        T_world_to_arm = kinematics.transform_world_to_arm(current_base_orientation, current_base_position)
+        arm_target_position_homogeneous = np.dot(T_world_to_arm, target_position_homogeneous)
+        arm_target_position = arm_target_position_homogeneous[:3]
+
         joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
         control_action = np.zeros(env.n())
         control_action[2:9] = joint_space_action
