@@ -39,7 +39,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
     # target_position_temp = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
     target_position_test = np.array([[0.5903106, -0.3, 1.02971885]])
-    target_position = np.array([[0.5903106, -0.3, 1.02971885]])
+    target_position = np.array([[0.5903106, 0.3, 1.02971885]])
 
     target_position_homogeneous = np.append(target_position, 1) 
 
@@ -89,7 +89,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
         joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
         control_action = np.zeros(env.n())
-        control_action[0] = 0.1
+        # control_action[0] = 0.1
         control_action[1] = -0.1
         control_action[2:9] = joint_space_action
         ob, *_ = env.step(control_action)
