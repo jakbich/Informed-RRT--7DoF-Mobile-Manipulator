@@ -53,14 +53,14 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     
 
     # Filling with obstacles and creating the list with al spheres [x,y,z,radius]
-    all_obstacles = np.array(fill_env_with_obstacles(env, 'advanced',1))
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'boxes',1))
 
     ####RRT#####
 
     history = []
 
     # Goal for medium env (1.5,-4.5,0)
-    goal_pos = (1,-3, 0)
+    goal_pos = (4,0, 0)
 
     # PLottin the goal
     visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
@@ -86,6 +86,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     total_cost_path = rrt_informed.calculate_path_cost(path_to_goal)
     
     if len(path_to_goal) > 3:
+
         interpolated_path = interpolate_path(path_to_goal, max_dist=4.0)
         path_to_goal_smooth = path_smoother(interpolated_path, total_cost_path=total_cost_path)
         rrt_informed.visualize_path(path_to_goal[:,0,:], color = [1,0,0])
@@ -93,6 +94,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
         # Make path_to_goal sparse (every 10th point) while keeping the last point
         path_to_goal_sparse = path_to_goal_smooth[::20]
+        
         path_to_goal_sparse[-1] = path_to_goal_smooth[-1]
         final_path = path_to_goal_sparse
         pid_controller = PIDBase(kp=[1, 0.75], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
@@ -119,6 +121,11 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     prev_action = np.zeros(env.n())
 
 
+    plt.plot(rrt_informed.all_path_costs)
+    plt.xlabel('Number of Paths Found')
+    plt.ylabel('Path Cost')
+    plt.title('Path Costs Over Iterations')
+    plt.show()
 
 
     for step in range(n_steps):

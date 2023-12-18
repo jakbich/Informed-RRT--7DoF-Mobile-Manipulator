@@ -59,8 +59,7 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
         walls = [
         # Boxes
         [[-2.5, -3, 0.5], 1, 1, 1],  # Box 1
-        [[2, 2, -0.5], 1, 1, 1],  # Box 2
-        [[0, -1.5, 0.5], 1.5, 1.5, 1],  # Box 3
+        [[0, -1.5, 0.5], 1.5, 1.5, 1],  # Box 2
 
         [[3.5, -1.5, 0.5], 2, 0.3, 1],  # Horizontal wall
 
@@ -70,6 +69,46 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
         ]
         all_obstacles = create_walls(env, walls, density, sphere_radius)
 
+    if obstacle_setup == 'labyrinth':
+
+        sphere_radius = 0.1
+            # Wall specifications [position, length, width, height]
+        walls = [
+            # Horizontal walls
+            [[0, -1.0, 0.1], 3.0, 0.2, 0.2],
+            [[-0.4, -2.5, 0.1], 4.8, 0.2, 0.2],
+            [[0, 2.0, 0.1], 3.0, 0.2, 0.2],
+            [[1.5, 5.0, 0.1], 3.0, 0.2, 0.2],
+
+            # Vertical walls
+            [[-1.5, 0.4, 0.1], 0.2, 3.0, 0.2],
+            [[1.5, -0.35, 0.1], 0.2, 1.5, 0.2],
+            [[3, 1.5, 0.1], 0.2, 7, 0.2],
+            [[6, 1.5, 0.1], 0.2, 10, 0.2],
+            [[-2.7, 1.3, 0.1], 0.2, 7, 0.2],
+
+            # Box
+            [[4.5, -1, 0.1], 1.2, 1.2, 0.2]
+            
+        ]
+
+        all_obstacles = create_walls(env, walls, density, sphere_radius)
+
+
+    if obstacle_setup == 'boxes':
+
+        sphere_radius = 0.1
+            # Wall specifications [position, length, width, height]
+        walls = [
+            # Box
+            [[2.5, -1.15, 0.1], 1.2, 1.2, 0.2],
+            [[2.5, 1.15, 0.1], 1.2, 1.2, 0.2]
+            
+            
+        ]
+
+        all_obstacles = create_walls(env, walls, density, sphere_radius)
+
 
 
     if obstacle_setup == 'hard':
@@ -77,7 +116,7 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
         sphere_radius = 0.15
             # Wall specifications [position, length, width, height]
         walls = [
-            [[0, -1.0, 0.5], 10.0, 0.2, 1],s
+            [[0, -1.0, 0.5], 10.0, 0.2, 1],
             [[0, 1.0, 0.5], 10.0, 0.2, 1],
             [[0, -3.0, 0.5], 10.0, 0.2,1],
             [[0, 3.0, 0.5], 10.0, 0.2, 1],

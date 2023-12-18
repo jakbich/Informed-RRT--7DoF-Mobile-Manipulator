@@ -25,6 +25,7 @@ class RRTStar:
 
         self.node_list = [np.array(config_start)]
         self.path = []
+        self.all_path_costs = []
 
         # Sphere around robot for collision checking safety margin
         self.robot_radius = 0.4
@@ -84,19 +85,22 @@ class RRTStar:
         """
         Add a new node to the random exploring tree
         """
+        # Plot the node 
         self.node_list.append(new_node)
         p.createMultiBody(baseMass=0, baseVisualShapeIndex=self.visual_shape_nodes, basePosition=new_node)
 
-        # Add new nodes to path and plot nodes
+        # Add new nodes to path
         self.path.append((np.array(parent_node), new_node))
-        p.addUserDebugLine(parent_node,new_node, [0.2, 0.2, 0.2], lineWidth=3)
-        p.addUserDebugLine(parent_node+[0,0,0.01],new_node+[0,0,0.01], [0.2, 0.2, 0.2], lineWidth=3)
-        p.addUserDebugLine(parent_node+[0,0,0.02],new_node+[0,0,0.02], [0.2, 0.2, 0.2], lineWidth=3)
 
         # Add new node to parent and cost dictionary
         self.parent[tuple(new_node)] = tuple(parent_node)
         self.cost[tuple(new_node)] = self.cost[tuple(parent_node)] + self.distance(parent_node, new_node)
 
+    def plot_edge(self, new_node, parent_node): 
+        # Plot the edge
+        p.addUserDebugLine(np.array(parent_node),np.array(new_node), [0.2, 0.2, 0.2], lineWidth=3)
+        p.addUserDebugLine(np.array(parent_node)+[0,0,0.01],np.array(new_node)+(0,0,0.01), [0.2, 0.2, 0.2], lineWidth=3)
+  
 
     def planning(self):
         """ 
@@ -110,12 +114,15 @@ class RRTStar:
                 if best_parent is not None:
                     self.add_node(new_node, best_parent)
                     self.rewire(new_node, nearby_nodes)
+                    self.plot_edge(new_node, best_parent)
 
         # Last connection to goal node
         nearest_node_to_goal = self.find_nearest_node(self.config_goal)
         self.add_node(np.array(self.config_goal), nearest_node_to_goal)
         nearby_nodes = self.find_nearby_nodes(self.config_goal, self.rewire_radius)
-        self.rewire(np.array(self.config_goal), nearby_nodes)        
+        self.rewire(np.array(self.config_goal), nearby_nodes)  
+        self.plot_edge(self.config_goal, nearest_node_to_goal)
+      
 
 
     def find_nearest_node(self, new_node):
@@ -222,7 +229,9 @@ class RRTStar:
             for i in range(len(path)-1):
                 # Convert list to tuple for concatenation
                 start_point, end_point = path[i], path[i+1]
-                offset = (0, 0, 0.01)
+                offset = (0, 0, 0.02)
+
+                # Draw blue line from start to goal for old and new path
                 p.addUserDebugLine(np.array(start_point) + offset, np.array(end_point) + offset, color, lineWidth=10)
 
 
@@ -252,6 +261,11 @@ class InformedRRTStar (RRTStar):
         # Visualize first path
         first_path = np.array(self.find_path())
         
+        # After finding a path to the goal
+        path_to_goal = np.array(self.find_path())
+        path_cost = self.calculate_path_cost(path_to_goal)
+        self.all_path_costs.append(path_cost)  # Record the path cost
+
         self.visualize_path(first_path[:,0,:], color=[0, 0, 1])
 
         self.calculate_ellipsoid()
@@ -263,7 +277,7 @@ class InformedRRTStar (RRTStar):
         """
         paths_found = 0
 
-        for _ in range(1000):
+        for _ in tqdm(range(600)):
             new_node = self.sample_new_node_ellipsoid()
             if new_node is not None:
                 nearby_nodes = self.find_nearby_nodes(new_node, self.rewire_radius)
@@ -271,12 +285,18 @@ class InformedRRTStar (RRTStar):
                 if best_parent is not None:
                     self.add_node(new_node, best_parent)
                     self.rewire(new_node, nearby_nodes)
+                    self.plot_edge(new_node, best_parent)
+                
+                    path_to_goal = np.array(self.find_path())
+                    path_cost = self.calculate_path_cost(path_to_goal)
+                    if path_cost < self.all_path_costs[-1]:
+                        self.all_path_costs.append(path_cost)  # Record the path cost
 
     def sample_new_node_ellipsoid(self):
         """
         Sample a new node in the ellipsoidal space
         """
-        for i in range(600): # Try 100 times to sample a valid config.
+        for i in range(100): # Try 100 times to sample a valid config.
             random_node  = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,0], size=3)
             if not self.check_collision(random_node) and self.is_point_in_ellipse(random_node[0], random_node[1], self.distance_start_goal, self.width_ellipse, self.config_start, self.direction_vector):
                 # Return (x,y,0) if valid point and inside of the ellipsoid shape
