@@ -81,7 +81,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
         current_base_position = np.array(ob['robot_0']['joint_state']['position'][:2])
 
         # Transform target position from world to arm coordinates
-        print(current_base_position)
         T_world_to_arm = kinematics.transform_world_to_arm(current_base_orientation, current_base_position)
         arm_target_position_homogeneous = np.dot(T_world_to_arm, target_position_homogeneous)
         arm_target_position = arm_target_position_homogeneous[:3]

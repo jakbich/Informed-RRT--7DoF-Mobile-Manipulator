@@ -67,9 +67,9 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     history = []
 
     # Goal for medium env (1.5,-4.5,0)
-    goal_pos = (2,2,0)
+    goal_pos = (1,0,0)
 
-    target_position = np.array([0.5903106, 0.3, 1.02971885])
+    target_position = np.array([1.2903106, 0.30, 1.02971885])
     target_position_homogeneous = np.append(target_position, 1) 
 
     draw_target_position = np.array(goal_pos) + target_position
@@ -81,8 +81,10 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     
     # Add target position as a red sphere
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=np.array([2.5903106, 2.3, 1.02971885]))
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=np.array([2.1903106, 2.15, 1.02971885]))
 
+    visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 1, 0, 1])
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=np.array([1.2903106, 0.30, 1.02971885]))
 
     # Initial action to get initial observation
     action = np.zeros(env.n())
@@ -163,7 +165,6 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
         current_base_position = np.array(ob['robot_0']['joint_state']['position'][:2])
 
         # Transform target position from world to arm coordinates
-        print(current_base_position)
         T_world_to_arm = kinematics.transform_world_to_arm(current_base_orientation, current_base_position)
         arm_target_position_homogeneous = np.dot(T_world_to_arm, target_position_homogeneous)
         arm_target_position = arm_target_position_homogeneous[:3]
