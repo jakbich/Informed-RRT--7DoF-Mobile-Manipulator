@@ -69,7 +69,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     # Goal for medium env (1.5,-4.5,0)
     goal_pos = (2,2,0)
 
-    target_position = np.array([[0.5903106, -0.3, 1.02971885]])
+    target_position = np.array([0.5903106, 0.3, 1.02971885])
     target_position_homogeneous = np.append(target_position, 1) 
 
     draw_target_position = np.array(goal_pos) + target_position
@@ -81,7 +81,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     
     # Add target position as a red sphere
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=draw_target_position)
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=np.array([2.5903106, 2.3, 1.02971885]))
 
 
     # Initial action to get initial observation

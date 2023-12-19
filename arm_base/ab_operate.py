@@ -38,14 +38,13 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
 
     # target_position_temp = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
-    target_position_test = np.array([[0.5903106, -0.3, 1.02971885]])
     target_position = np.array([[0.5903106, 0.3, 1.02971885]])
 
     target_position_homogeneous = np.append(target_position, 1) 
 
     # Add target position as a red sphere
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 1, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position_test)
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=np.array([0.5903106, 0.3, 1.02971885]))
 
 
 

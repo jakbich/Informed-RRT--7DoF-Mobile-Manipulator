@@ -14,6 +14,8 @@ class ArmControl:
         error = multi_dim_position - A
         error_magnitude = np.linalg.norm(error)
 
+        print("Error magnitude: ", error_magnitude)
+
         if error_magnitude < 1:
             joint_action = np.zeros(jacobian.shape[1])
         else:
