@@ -53,14 +53,14 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     
 
     # Filling with obstacles and creating the list with al spheres [x,y,z,radius]
-    all_obstacles = np.array(fill_env_with_obstacles(env, 'boxes',1))
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'medium',1))
 
     ####RRT#####
 
     history = []
 
     # Goal for medium env (1.5,-4.5,0)
-    goal_pos = (4,0, 0)
+    goal_pos = (1.5,-4.5, 0)
 
     # PLottin the goal
     visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
@@ -72,6 +72,8 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     action = np.zeros(env.n())
     for stp in range(10):
         ob, *_ = env.step(action)
+        current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][3:10])
+        print (f"Current joint angles: {current_joint_angles}")
 
     rrt_informed = InformedRRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],
                   obstacles=all_obstacles, iter_max=500, 
