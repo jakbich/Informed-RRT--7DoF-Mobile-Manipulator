@@ -2,7 +2,7 @@ from ab_kinematics import Kinematics
 import numpy as np
 
 class ArmControl:
-    def __init__(self, kp=2, kd=0.2):
+    def __init__(self, kp=1, kd=0.1):
         self.kp = kp
         self.kd = kd
         self.errors = [0]
@@ -14,7 +14,7 @@ class ArmControl:
         error = multi_dim_position - A
         error_magnitude = np.linalg.norm(error)
 
-        print("Error magnitude: ", error_magnitude)
+        # print("Error magnitude: ", error_magnitude)
 
         if error_magnitude < 1:
             joint_action = np.zeros(jacobian.shape[1])
