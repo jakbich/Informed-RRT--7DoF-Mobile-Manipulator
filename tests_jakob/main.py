@@ -75,8 +75,8 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
     rrt = RRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],
                   obstacles=all_obstacles, iter_max=500, 
-                  config_goal=goal_pos, step_len=1.5,
-                  sampling_range=10, rewire_radius=3)
+                  config_goal=goal_pos, step_len=1,
+                  sampling_range=10, rewire_radius=2)
     rrt.planning()
     path_to_goal = np.array(rrt.find_path())
     

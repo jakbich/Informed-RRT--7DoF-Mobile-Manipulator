@@ -16,7 +16,7 @@ from tests_jakob.create_environments import fill_env_with_obstacles, add_sphere
 
 class RRTStar:
 
-    def __init__(self, config_start = (0,0,0), config_goal = (0,0,0), step_len = 0.1,iter_max = 100, obstacles= [], sampling_range=5, rewire_radius= 2):
+    def __init__(self, config_start = (0,0,0), config_goal = (0,0,0), step_len = 0.1,iter_max = 100, obstacles= [], sampling_range=5, rewire_radius= 2, arm  = False):
         self.config_start = config_start
         self.config_goal = config_goal
         self.step_len = step_len
@@ -27,11 +27,15 @@ class RRTStar:
         self.path = []
         self.all_path_costs = []
 
+        # Arm or mobile base
+        self.arm = arm
+
         # Sphere around robot for collision checking safety margin
         self.robot_radius = 0.4
 
         # Allowed distance to goal
-        self.goal_epsilon = 1
+        self.goal_epsilon_base = 1
+        self.goal_epsilon_arm = 0.4
 
         # Initializing dictionaries
         self.parent ={tuple(self.config_start): None}
@@ -53,11 +57,19 @@ class RRTStar:
         Sample a new node in the configuration space.
         """
         for i in range(100): # Try 100 times to sample a valid config.
-            random_node  = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,0], size=3)
-            if not self.check_collision(random_node):
-                # Return (x,y,0) if valid point
-                return random_node
 
+            if not self.arm:
+                random_node  = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,0], size=3)
+                if not self.check_collision(random_node):
+                    # Return (x,y,0) if valid point
+                    return random_node
+            # If arm True, sample 3d point
+            else:
+                random_node  = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,self.rrt_sampling_range], size=3)
+                if not self.check_collision(random_node):
+                    # Return (x,y,0) if valid point
+                    return random_node
+            
 
     def check_collision(self, node):
         """
@@ -68,7 +80,7 @@ class RRTStar:
             for sphere in wall:
                 sphere_radius = sphere[3]
 
-                # Check in 2D (x,y) for collision
+                # Check in 3D (x,y,z) for collision
                 if self.distance(node, sphere[:3]) <= self.robot_radius + sphere_radius:
                     return True  # Collision detected
         return False  # No collision
@@ -78,7 +90,7 @@ class RRTStar:
         """
         Calculate the distance between two points.
         """
-        return np.linalg.norm(np.array(point1[:2]) - np.array(point2[:2]))
+        return np.linalg.norm(np.array(point1[:3]) - np.array(point2[:3]))
     
 
     def add_node(self, new_node, parent_node):
@@ -122,6 +134,8 @@ class RRTStar:
         nearby_nodes = self.find_nearby_nodes(self.config_goal, self.rewire_radius)
         self.rewire(np.array(self.config_goal), nearby_nodes)  
         self.plot_edge(self.config_goal, nearest_node_to_goal)
+
+    
       
 
 
@@ -196,7 +210,11 @@ class RRTStar:
 
     def is_goal_reached(self, node):
         # Check if the node is within a certain threshold of the goal
-        return self.distance(node, self.config_goal) < self.goal_epsilon
+        if not self.arm:
+            return self.distance(node, self.config_goal) < self.goal_epsilon_base
+        
+        else:
+            return self.distance(node, self.config_goal) < self.goal_epsilon_arm
 
     def find_path(self):
         path = []
@@ -277,7 +295,7 @@ class InformedRRTStar (RRTStar):
         """
         paths_found = 0
 
-        for _ in tqdm(range(600)):
+        for _ in tqdm(range(200)):
             new_node = self.sample_new_node_ellipsoid()
             if new_node is not None:
                 nearby_nodes = self.find_nearby_nodes(new_node, self.rewire_radius)
