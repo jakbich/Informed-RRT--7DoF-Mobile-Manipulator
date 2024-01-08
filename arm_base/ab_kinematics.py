@@ -65,8 +65,13 @@ class Kinematics:
 
     def transform_world_to_arm(self, rotation_angle_z=0, base_position=np.array([0,0])):
         # Create translation matrix
-        translation_x = -0.19 + base_position[0]
-        translation_y = 0 + base_position[1]
+        # print("Rotation angle: ", rotation_angle_z)
+        translation_x = -0.19*np.cos(rotation_angle_z) + base_position[0]
+        # print("Translation x: ", np.cos(rotation_angle_z))
+        translation_y = -0.19*np.sin(rotation_angle_z) + base_position[1]
+        # print("Translation y: ", np.sin(rotation_angle_z))
+        # translation_x = -0.19 + base_position[0]
+        # translation_y = 0 + base_position[1]
         translation_z = 0.64
         translation_matrix = np.array([
             [1, 0, 0, translation_x],

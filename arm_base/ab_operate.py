@@ -37,14 +37,15 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
 
 
-    # target_position_temp = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
+    # target_position = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
     target_position = np.array([[0.5903106, 0.3, 1.02971885]])
 
     target_position_homogeneous = np.append(target_position, 1) 
 
     # Add target position as a red sphere
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 1, 0, 1])
-    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=np.array([0.5903106, 0.3, 1.02971885]))
+    visual_shape_id2 = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
+    p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position[0])
 
 
 
@@ -74,6 +75,13 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
 
     # -------------------- ALBERT CONTROL --------------------
+    
+    # Changing direction for debugging y position
+    for i in range(160):
+        action = np.zeros(env.n())
+        action[1] = 1
+        ob, *_ = env.step(action)
+
     history = []
     for _ in range(n_steps):
         current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][3:10])
@@ -85,9 +93,22 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
         arm_target_position_homogeneous = np.dot(T_world_to_arm, target_position_homogeneous)
         arm_target_position = arm_target_position_homogeneous[:3]
 
+        # debug = arm_target_position.copy()
+        # debug[0] += -0.19
+        # debug[2] += 0.64
+        # print("Arm target position: ", debug)
+
+        arm_end_position,_,_ = kinematics.matrices(current_joint_angles)
+        T_world_to_arm = kinematics.transform_world_to_arm(current_base_orientation, current_base_position)
+        T_arm_to_world = np.linalg.inv(T_world_to_arm)
+
+        current_end_position = np.dot(T_arm_to_world, np.append(arm_end_position, 1))[:3]  
+        p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id2, basePosition=current_end_position)
+
+
         joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
         control_action = np.zeros(env.n())
-        control_action[0] = 0
+        control_action[0] = 0.5
         control_action[1] = 0
         control_action[2:9] = joint_space_action
         ob, *_ = env.step(control_action)
