@@ -19,7 +19,7 @@ class Kinematics:
             {'a':  0.0825, 'd': 0,     'alpha':  pi/2 },
             {'a': -0.0825, 'd': 0.384, 'alpha': -pi/2 },
             {'a':  0,      'd': 0,     'alpha':  pi/2 },
-            {'a':  0.088,  'd': 0.107, 'alpha':  pi/2 },
+            {'a':  0.088,  'd': 0.24, 'alpha':  pi/2 },
         ]
 
         self.speed = np.array([
@@ -90,35 +90,37 @@ class Kinematics:
         transformation_matrix = np.linalg.inv(transformation_matrix)
 
         return transformation_matrix
-
-    # def base_to_arm(self, target_position, base_position=np.array([0,0]), theta=0):
-    #     rotation_angle_z = theta
-    #     translation_x = -0.19
-    #     translation_y = 0
-    #     translation_z = 0.64
-    #     transformation_matrix = np.identity(4)
-
-    #     cos_a = np.cos(rotation_angle_z)
-    #     sin_a = np.sin(rotation_angle_z)
-    #     Rz = np.array([[cos_a, -sin_a, 0, 0],
-    #                    [sin_a, cos_a, 0, 0],
-    #                    [0, 0, 1, 0],
-    #                    [0, 0, 0, 1]])
-
-    #     # Adjust translation based on the new origin
-    #     transformation_matrix[0, 3] = translation_x + base_position[0]
-    #     transformation_matrix[1, 3] = translation_y + base_position[1]
-    #     transformation_matrix[2, 3] = translation_z 
-
-    #     # Combine rotation and translation
-    #     transformation_matrix = np.dot(Rz, transformation_matrix)   
-    #     # transformation_matrix = np.linalg.inv(transformation_matrix)
-
-    #     # Convert the target_position to a 4x1 vector
-    #     target_vector = np.append(target_position, 1)
-
-    #     # Apply the transformation
-    #     target_position_transformed = np.dot(transformation_matrix, target_vector)
-
-    #     return target_position_transformed[:-1]
+        
     
+
+        # def base_to_arm(self, target_position, base_position=np.array([0,0]), theta=0):
+        #     rotation_angle_z = theta
+        #     translation_x = -0.19
+        #     translation_y = 0
+        #     translation_z = 0.64
+        #     transformation_matrix = np.identity(4)
+
+        #     cos_a = np.cos(rotation_angle_z)
+        #     sin_a = np.sin(rotation_angle_z)
+        #     Rz = np.array([[cos_a, -sin_a, 0, 0],
+        #                    [sin_a, cos_a, 0, 0],
+        #                    [0, 0, 1, 0],
+        #                    [0, 0, 0, 1]])
+
+        #     # Adjust translation based on the new origin
+        #     transformation_matrix[0, 3] = translation_x + base_position[0]
+        #     transformation_matrix[1, 3] = translation_y + base_position[1]
+        #     transformation_matrix[2, 3] = translation_z 
+
+        #     # Combine rotation and translation
+        #     transformation_matrix = np.dot(Rz, transformation_matrix)   
+        #     # transformation_matrix = np.linalg.inv(transformation_matrix)
+
+        #     # Convert the target_position to a 4x1 vector
+        #     target_vector = np.append(target_position, 1)
+
+        #     # Apply the transformation
+        #     target_position_transformed = np.dot(transformation_matrix, target_vector)
+
+        #     return target_position_transformed[:-1]
+        
