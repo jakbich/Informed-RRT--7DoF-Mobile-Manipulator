@@ -87,8 +87,8 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
         joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
         control_action = np.zeros(env.n())
-        # control_action[0] = 0.1
-        control_action[1] = -0.1
+        control_action[0] = 0
+        control_action[1] = 0
         control_action[2:9] = joint_space_action
         ob, *_ = env.step(control_action)
         history.append(ob)
