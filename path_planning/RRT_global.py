@@ -11,7 +11,7 @@ from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDri
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from environments.create_environments import fill_env_with_obstacles, add_sphere
+from tests_jakob.create_environments import fill_env_with_obstacles, add_sphere
 
 
 class RRTStar:
@@ -328,7 +328,7 @@ class InformedRRTStar (RRTStar):
         """
         paths_found = 0
 
-        for _ in tqdm(range(400)):
+        for _ in tqdm(range(200)):
             new_node = self.sample_new_node_ellipsoid()
             if new_node is not None:
                 nearby_nodes = self.find_nearby_nodes(new_node, self.rewire_radius)
