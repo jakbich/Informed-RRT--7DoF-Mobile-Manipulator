@@ -11,7 +11,12 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) +
                 "PDM_project")
 
-from global_planner import Node
+class Node:
+    def __init__(self, n):
+        self.x = n[0]
+        self.y = n[1]
+        self.parent = None
+
 
 
 # Set up environment (needs to be changed to our supermarket)

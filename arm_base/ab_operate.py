@@ -7,7 +7,6 @@ from urdfenvs.urdf_common.urdf_env import UrdfEnv
 from ab_control import ArmControl
 from ab_kinematics import Kinematics
 
-
 def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     robots = [
         GenericDiffDriveRobot(
@@ -35,10 +34,9 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     arm_control = ArmControl()
     kinematics = Kinematics()
 
-
-
     # target_position = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
-    target_position = np.array([[0.5903106, 0.3, 1.02971885]])
+    # target_position = np.array([[0.5903106, 0.3, 1.02971885]])
+    target_position = np.array([[0.2, 0, 0.6]])
 
     target_position_homogeneous = np.append(target_position, 1) 
 
@@ -46,9 +44,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 1, 0, 1])
     visual_shape_id2 = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 0, 0, 1])
     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=target_position[0])
-
-
-
 
     # -------------------- SHAPE VISUALIZATION --------------------
     # Add axes at the origin (you can change the position as needed)
@@ -75,13 +70,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
 
     # -------------------- ALBERT CONTROL --------------------
-    
-    # Changing direction for debugging y position
-    for i in range(160):
-        action = np.zeros(env.n())
-        action[1] = 1
-        ob, *_ = env.step(action)
-
     history = []
     for _ in range(n_steps):
         current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][3:10])
@@ -93,28 +81,56 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
         arm_target_position_homogeneous = np.dot(T_world_to_arm, target_position_homogeneous)
         arm_target_position = arm_target_position_homogeneous[:3]
 
-        # debug = arm_target_position.copy()
-        # debug[0] += -0.19
-        # debug[2] += 0.64
-        # print("Arm target position: ", debug)
-
         arm_end_position,_,_ = kinematics.matrices(current_joint_angles)
         T_world_to_arm = kinematics.transform_world_to_arm(current_base_orientation, current_base_position)
         T_arm_to_world = np.linalg.inv(T_world_to_arm)
 
         current_end_position = np.dot(T_arm_to_world, np.append(arm_end_position, 1))[:3]  
-        p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id2, basePosition=current_end_position)
-
+        # p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id2, basePosition=current_end_position)
 
         joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
         control_action = np.zeros(env.n())
-        control_action[0] = 0.5
+        control_action[0] = 0
         control_action[1] = 0
         control_action[2:9] = joint_space_action
         ob, *_ = env.step(control_action)
         history.append(ob)
+
+        if goal_reached(current_end_position, target_position):
+            drop_arm(env)
+            break
+
     env.close()
     return history
+
+def goal_reached(current_position, target_position, threshold=0.1):
+    return np.linalg.norm(current_position - target_position) < threshold
+
+def drop_arm(env):
+    for i in range(130):
+        action = np.zeros(env.n())
+        action[0] = 1
+        ob, *_ = env.step(action)
+
+    for i in range(100):
+        action = np.zeros(env.n())
+        action[5] = 1
+        ob, *_ = env.step(action)
+
+    for i in range(150):
+        action = np.zeros(env.n())
+        action[2] = 1
+        ob, *_ = env.step(action)
+
+    for i in range(150):
+        action = np.zeros(env.n())
+        action[5] = -1
+        ob, *_ = env.step(action)
+
+    for i in range(1500):
+        action = np.zeros(env.n())
+        ob, *_ = env.step(action)
+    return
 
 
 if __name__ == "__main__":
