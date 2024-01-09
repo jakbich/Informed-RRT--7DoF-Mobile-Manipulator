@@ -26,11 +26,23 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
     if obstacle_setup == 'empty':
         all_obstacles = []
 
-    if obstacle_setup == 'arm':
-        walls = [[[0, -0.3, 0.5], 1, 0.1, 0.8]]
-        
+    if obstacle_setup == 'video':
+        walls = [[[0, 0.4, 0.5], 1, 0.1, 0.7], 
+                 [[0.5, 0.9, 0.5], 0.1, 1, 0.7], 
+                 [[-0.5, 0.9, 0.5], 0.1, 1, 0.7],
+                 [[0, 1.4, 0.5], 1, 0.1, 0.7]
+               ]
         sphere_radius = 0.05
-        all_obstacles = create_walls(env, walls, density, sphere_radius)
+        all_obstacles1 = create_walls(env, walls, density, sphere_radius)
+
+        walls = [[[0, -1.0, 0.5], 5.0, 0.3, 0.5],
+        [[3, -3.0, 0.5], 5.0, 0.3, 0.5],
+        [[0.6, -4.5, 0.5], 0.3, 3, 0.5]]
+
+        sphere_radius = 0.2
+        all_obstacles2 = create_walls(env, walls, density, sphere_radius)
+
+        return all_obstacles1 + all_obstacles2
             
 
     if obstacle_setup == 'easy':
