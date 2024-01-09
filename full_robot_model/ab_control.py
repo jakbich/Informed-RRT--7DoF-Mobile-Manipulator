@@ -1,4 +1,4 @@
-from ab_kinematics import Kinematics
+from .ab_kinematics import Kinematics
 import numpy as np
 
 class ArmControl:

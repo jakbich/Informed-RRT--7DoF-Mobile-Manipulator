@@ -11,7 +11,7 @@ from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDri
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from tests_jakob.create_environments import fill_env_with_obstacles, add_sphere
+from environments.create_environments import fill_env_with_obstacles, add_sphere
 
 
 class RRTStar:
