@@ -104,10 +104,6 @@ def goal_reached(current_position, target_position, threshold=0.08):
     return np.linalg.norm(current_position - target_position) < threshold
 
 def drop_arm(env):
-    for i in range(130):
-        action = np.zeros(env.n())
-        action[0] = 1
-        ob, *_ = env.step(action)
 
     for i in range(100):
         action = np.zeros(env.n())
@@ -119,7 +115,7 @@ def drop_arm(env):
         action[2] = 1
         ob, *_ = env.step(action)
 
-    for i in range(150):
+    for i in range(100):
         action = np.zeros(env.n())
         action[5] = -1
         ob, *_ = env.step(action)

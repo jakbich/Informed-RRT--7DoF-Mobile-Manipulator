@@ -103,17 +103,12 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
     else:
         final_path = path_to_goal[:,0,:]
-        print("Final path: ", path_to_goal)
-        print(final_path)
         rrt_informed.visualize_path(final_path)
         pid_controller = PIDBase(kp=[1, 2], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
 
 
     ###/RRT####
 
-    linear_actions = []  # List to store action[0] values
-    linear_errors = []
-    final_reach_sent = False
 
     p.resetDebugVisualizerCamera(cameraDistance=5, cameraYaw=0, cameraPitch=-89.99, cameraTargetPosition=[0, 0, 0])
 
