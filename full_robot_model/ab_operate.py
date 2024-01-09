@@ -4,8 +4,8 @@ import numpy as np
 import pybullet as p
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from ab_control import ArmControl
-from ab_kinematics import Kinematics
+from .ab_control import ArmControl
+from .ab_kinematics import Kinematics
 
 def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     robots = [
@@ -100,7 +100,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     env.close()
     return history
 
-def goal_reached(current_position, target_position, threshold=0.1):
+def goal_reached(current_position, target_position, threshold=0.08):
     return np.linalg.norm(current_position - target_position) < threshold
 
 def drop_arm(env):

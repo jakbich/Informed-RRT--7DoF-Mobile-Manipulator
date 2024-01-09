@@ -120,11 +120,11 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     prev_action = np.zeros(env.n())
 
 
-    plt.plot(rrt_informed.all_path_costs)
-    plt.xlabel('Number of Paths Found')
-    plt.ylabel('Path Cost')
-    plt.title('Path Costs Over Iterations')
-    plt.show()
+    # plt.plot(rrt_informed.all_path_costs)
+    # plt.xlabel('Number of Paths Found')
+    # plt.ylabel('Path Cost')
+    # plt.title('Path Costs Over Iterations')
+    # plt.show()
 
 
     for step in range(n_steps):

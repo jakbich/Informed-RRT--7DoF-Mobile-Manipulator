@@ -7,8 +7,8 @@ import os
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from arm_base.ab_control import ArmControl
-from arm_base.ab_kinematics import Kinematics
+from full_robot_model.ab_control import ArmControl
+from full_robot_model.ab_kinematics import Kinematics
 
 from global_path.RRT_global import RRTStar
 from mobile_base.pid_control import PIDBase, path_smoother, interpolate_path
@@ -52,8 +52,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
     # target_position_temp = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
     target_positions_arm = [(0, 0.55, 0.6), (0.2,0,0.65)]
-
-    #target_position_homogeneous = np.append(target_position, 1) 
 
     # Add target position as a red sphere
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 1, 0, 1])
@@ -150,8 +148,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
                 joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
                 control_action = np.zeros(env.n())
-                control_action[0] = 0
-                control_action[1] = 0
                 control_action[2:9] = joint_space_action
                 ob, *_ = env.step(control_action)
                 history.append(ob)
