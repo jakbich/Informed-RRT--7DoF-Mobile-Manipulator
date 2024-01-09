@@ -3,8 +3,8 @@ import numpy as np
 import pybullet as p
 from urdfenvs.robots.generic_urdf import GenericUrdfReacher
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from control import ArmControl
-from kinematics import Kinematics
+from control_arm import ArmControl
+from kinematics_arm import Kinematics
 
 
 def run_panda(n_steps=1000, render=False, goal=True, obstacles=False):
