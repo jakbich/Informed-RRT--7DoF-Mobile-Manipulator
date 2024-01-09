@@ -53,7 +53,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     
 
     # Filling with obstacles and creating the list with al spheres [x,y,z,radius]
-    all_obstacles = np.array(fill_env_with_obstacles(env, 'medium',1))
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'advanced',1))
 
     ####RRT#####
 

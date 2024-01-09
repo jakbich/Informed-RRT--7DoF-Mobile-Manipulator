@@ -11,7 +11,7 @@ from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDri
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from environments.create_environments import fill_env_with_obstacles, add_sphere
+from tests_jakob.create_environments import fill_env_with_obstacles, add_sphere
 
 
 class RRTStar:
@@ -133,10 +133,10 @@ class RRTStar:
 
     def plot_edge(self, new_node, parent_node): 
         # Plot the edge
-        p.addUserDebugLine(np.array(parent_node),np.array(new_node), [0.2, 0.2, 0.2], lineWidth=3)  
+        p.addUserDebugLine(np.array(parent_node),np.array(new_node), [0.2, 0.2, 0.2], lineWidth=3)
         p.addUserDebugLine(np.array(parent_node)+[0,0,0.01],np.array(new_node)+(0,0,0.01), [0.2, 0.2, 0.2], lineWidth=3)
-    
-    
+  
+
     def planning(self):
         """ 
         Main function for RRT* algorithm
@@ -328,7 +328,7 @@ class InformedRRTStar (RRTStar):
         """
         paths_found = 0
 
-        for _ in tqdm(range(400)):
+        for _ in tqdm(range(200)):
             new_node = self.sample_new_node_ellipsoid()
             if new_node is not None:
                 nearby_nodes = self.find_nearby_nodes(new_node, self.rewire_radius)
@@ -429,13 +429,13 @@ class InformedRRTStar (RRTStar):
     def adjust_ellipsoid(self):
         # Inside calculate_ellipsoid method
         counter_in_elipse = 0
-        while counter_in_elipse < len(self.path_to_goal) and counter_in_elipse < 50:
+        while counter_in_elipse < len(self.path_to_goal):
             counter_in_elipse = 0
             for i in range(len(self.path_to_goal)):
                 if not self.is_point_in_ellipse(self.path_to_goal[i][0][0], self.path_to_goal[i][0][1], self.distance_start_goal, self.width_ellipse, self.config_start, self.direction_vector):
+                    print(f"Point {i} not in ellipse")
                     self.width_ellipse *= 1.1
                 else:
                     counter_in_elipse += 1
-                    print(counter_in_elipse)
 
         
