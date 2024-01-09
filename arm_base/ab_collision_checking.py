@@ -15,9 +15,7 @@ from mobile_base.pid_control import PIDBase, path_smoother, interpolate_path
 
 from tests_jakob.create_environments import fill_env_with_obstacles
 
-
-
-def is_close_to_target(current_position, target_position, threshold=0.01):
+def is_close_to_target(current_position, target_position, threshold=0.08):
     return np.linalg.norm(current_position - target_position) < threshold
 
 
@@ -49,17 +47,17 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     kinematics = Kinematics()
 
     # -------------------- Obstacles --------------------
-    all_obstacles = np.array(fill_env_with_obstacles(env, 'arm',1))
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'video',1))
 
     # target_position_temp = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
-    target_positions = [(0, -0.6, 0.7), (0.5,0,0.7)]
+    target_positions_arm = [(0, 0.55, 0.6), (0.2,0,0.65)]
 
     #target_position_homogeneous = np.append(target_position, 1) 
 
     # Add target position as a red sphere
     visual_shape_id = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.07, rgbaColor=[1, 1, 0, 1])
 
-    for target_position in target_positions:
+    for target_position in target_positions_arm:
         p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id, basePosition=np.array(target_position))
 
     # -------------------- SHAPE VISUALIZATION --------------------
@@ -75,7 +73,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     action = np.zeros(env.n())
 
 
-    for target_position in target_positions:
+    for target_position in target_positions_arm:
         for step in range(10):
             ob, *_ = env.step(action)
 
@@ -88,8 +86,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
             T_arm_to_world = np.linalg.inv(T_world_to_arm)
 
             current_end_position = np.dot(T_arm_to_world, np.append(arm_end_position, 1))[:3]  
-    
-
 
         # ------------------- RRT ARM -------------------
         arm_reach = 0.8    
@@ -103,8 +99,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
         rrt.planning()
         path_to_goal = np.array(rrt.find_path())
         print(path_to_goal)
-
-        # total_cost_path = sum(rrt.cost.values())
         total_cost_path = rrt.calculate_path_cost(path_to_goal)
         
         
