@@ -53,8 +53,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     p.addUserDebugLine(origin, [0, axis_length, 0], [0, 1, 0], 2.0)  # Y-axis in green
     p.addUserDebugLine(origin, [0, 0, axis_length], [0, 0, 1], 2.0)  # Z-axis in blue
 
-
-
     # # Add arm reach
     # sphere_radius = 0.855
     # sphere_center = [0, 0, 0.335]
@@ -86,8 +84,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
         T_arm_to_world = np.linalg.inv(T_world_to_arm)
 
         current_end_position = np.dot(T_arm_to_world, np.append(arm_end_position, 1))[:3]  
-        # p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_id2, basePosition=current_end_position)
-
+        
         joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
         control_action = np.zeros(env.n())
         control_action[0] = 0
