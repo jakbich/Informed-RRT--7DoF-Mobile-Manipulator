@@ -31,10 +31,29 @@ PROJECT/
 ## Installation
 Before running the scripts, ensure the following dependencies are installed:
 
-- Python 3.x
-- gymnasium
-- numpy
-- pybullet
+Before proceeding, ensure that you have Conda installed on your system. If you do not have Conda installed, you can download and install it from [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/products/individual).
+
+
+1. Clone the repository:
+
+   ```bash
+   git clone git@github.com:Hobsyllvin/PDM_project.git
+    ```
+
+2. **Create the Environment**: Run the following command to create the Conda environment:
+
+   ```bash
+   conda env create -f conda_env_group20.yml
+    ```
+
+3. **Open Terminal or Command Prompt**: Navigate to the directory where the `conda_env_group20.yml` file is located.
+
+4. **Activate the Environment**: Run the following command to activate the Conda environment:
+
+   ```bash
+   conda activate PDM
+   ```
+
 
 ## Usage
 To run the autonomous robot simulation, execute the main scripts provided for different sections of the robot:
@@ -46,7 +65,7 @@ To run the autonomous robot simulation, execute the main scripts provided for di
 For example, to run the full robot simulation:
 
 ```bash
-python main.py
+python3 main.py
 ```
 
 ## Visualization
