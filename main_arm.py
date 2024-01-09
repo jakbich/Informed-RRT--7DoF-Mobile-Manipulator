@@ -89,7 +89,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
         # ------------------- RRT ARM -------------------
         arm_reach = 0.8    
 
-
         rrt = RRTStar(config_start=current_end_position,
                 obstacles=all_obstacles, iter_max=500, 
                 config_goal=target_position, step_len=0.01,
