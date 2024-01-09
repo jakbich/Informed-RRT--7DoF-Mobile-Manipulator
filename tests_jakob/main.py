@@ -119,7 +119,6 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
 
 
-
     for step in range(n_steps):
 
         ob, *_ = env.step(action)

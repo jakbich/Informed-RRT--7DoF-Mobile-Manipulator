@@ -32,6 +32,7 @@ class RRTStar:
 
         # Sphere around robot for collision checking safety margin
         self.robot_radius = 0.4
+        self.arm_radius = 0.12
 
         # Allowed distance to goal
         self.goal_epsilon_base = 1
@@ -50,9 +51,14 @@ class RRTStar:
 
         # Visual shape for points
         self.visual_shape_nodes = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.04, rgbaColor=[1, 0, 0, 1])
+        self.visual_shape_nodes_3D = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.02, rgbaColor=[1, 0, 0, 1])
+
+        # Visual shape for splines 
         self.visual_shape_spline = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.05, rgbaColor=[0, 1, 0, 1])
+        self.visual_shape_spline_3D = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.03, rgbaColor=[0, 1, 0, 1])
+
     
-    def sample_new_node(self):
+    def sample_new_node(self, current_position = []):
         """
         Sample a new node in the configuration space.
         """
@@ -63,13 +69,26 @@ class RRTStar:
                 if not self.check_collision(random_node):
                     # Return (x,y,0) if valid point
                     return random_node
+                
             # If arm True, sample 3d point
             else:
-                random_node  = np.random.uniform([-self.rrt_sampling_range, -self.rrt_sampling_range,0], [self.rrt_sampling_range, self.rrt_sampling_range,self.rrt_sampling_range], size=3)
+                x_range = self.rrt_sampling_range
+                z_range = [0.7, 1.4]  # Range for z
+
+                # Sample a point in cylindrical space
+                radius = np.random.uniform(0.2, x_range)
+                angle = np.random.uniform(0, 2 * np.pi)
+                z = np.random.uniform(z_range[0], z_range[1])
+
+                # Convert polar coordinates to Cartesian coordinates for x and y
+                x = radius * np.cos(angle)
+                y = radius * np.sin(angle)
+
+                random_node = np.array([x, y, z])
+
                 if not self.check_collision(random_node):
                     # Return (x,y,0) if valid point
                     return random_node
-            
 
     def check_collision(self, node):
         """
@@ -81,8 +100,10 @@ class RRTStar:
                 sphere_radius = sphere[3]
 
                 # Check in 3D (x,y,z) for collision
-                if self.distance(node, sphere[:3]) <= self.robot_radius + sphere_radius:
+                if not self.arm and self.distance(node, sphere[:3]) <= self.robot_radius + sphere_radius:
                     return True  # Collision detected
+                elif self.arm and self.distance(node, sphere[:3]) <= self.arm_radius + sphere_radius:
+                    return True
         return False  # No collision
     
         
@@ -99,8 +120,10 @@ class RRTStar:
         """
         # Plot the node 
         self.node_list.append(new_node)
-        p.createMultiBody(baseMass=0, baseVisualShapeIndex=self.visual_shape_nodes, basePosition=new_node)
-
+        if not self.arm:
+            p.createMultiBody(baseMass=0, baseVisualShapeIndex=self.visual_shape_nodes, basePosition=new_node)
+        else:
+            p.createMultiBody(baseMass=0, baseVisualShapeIndex=self.visual_shape_nodes_3D, basePosition=new_node)
         # Add new nodes to path
         self.path.append((np.array(parent_node), new_node))
 
@@ -233,7 +256,7 @@ class RRTStar:
     
     def visualize_path(self, path, spline=False, color=[1, 0, 0]):
 
-        if spline:
+        if spline and not self.arm:
             for i in range(len(path)-1):
                 # Convert list to tuple for concatenation
                 start_point, end_point = path[i], path[i+1]
@@ -241,6 +264,16 @@ class RRTStar:
 
                 # Visualize all statr points as green spheres
                 p.createMultiBody(baseMass=0, baseVisualShapeIndex=self.visual_shape_spline, basePosition=start_point)
+        
+        if spline and self.arm:
+            for i in range(len(path)-1):
+                # Convert list to tuple for concatenation
+                start_point, end_point = path[i], path[i+1]
+                
+
+                # Visualize all statr points as green spheres
+                p.createMultiBody(baseMass=0, baseVisualShapeIndex=self.visual_shape_spline_3D, basePosition=start_point)
+
 
 
         else:

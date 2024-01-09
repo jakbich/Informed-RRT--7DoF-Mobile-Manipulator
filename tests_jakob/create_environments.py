@@ -26,6 +26,12 @@ def fill_env_with_obstacles(env, obstacle_setup, density=1):
     if obstacle_setup == 'empty':
         all_obstacles = []
 
+    if obstacle_setup == 'arm':
+        walls = [[[0, -0.3, 0.5], 1, 0.1, 0.8]]
+        
+        sphere_radius = 0.05
+        all_obstacles = create_walls(env, walls, density, sphere_radius)
+            
 
     if obstacle_setup == 'easy':
 

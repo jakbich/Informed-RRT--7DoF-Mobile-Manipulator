@@ -73,11 +73,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
 
         current_end_position = np.dot(T_arm_to_world, np.append(arm_end_position, 1))[:3]  
  
-    
-        if target_index < len(target_positions):
-            distance_to_target = np.linalg.norm(current_end_position - target_positions[target_index])
-            print(f"Distance to target {target_index}: {distance_to_target:.4f}")   
-
         # Check if current position is close to the target
         if target_index < len(target_positions) and is_close_to_target(current_end_position, target_positions[target_index]):
             target_index += 1  
@@ -89,6 +84,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
             arm_target_position = arm_target_position_homogeneous[:3]
 
             joint_space_action = arm_control.control_action(current_joint_angles, arm_target_position).flatten()
+            
             control_action = np.zeros(env.n())
             control_action[0] = 0
             control_action[1] = 0
