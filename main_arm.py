@@ -6,14 +6,15 @@ import sys
 import os
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from ab_control import ArmControl
-from ab_kinematics import Kinematics
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from arm_base.ab_control import ArmControl
+from arm_base.ab_kinematics import Kinematics
+
 from global_path.RRT_global import RRTStar
 from mobile_base.pid_control import PIDBase, path_smoother, interpolate_path
 
 
-from tests_jakob.create_environments import fill_env_with_obstacles
+from environments.create_environments import fill_env_with_obstacles
 
 def is_close_to_target(current_position, target_position, threshold=0.08):
     return np.linalg.norm(current_position - target_position) < threshold
@@ -47,7 +48,7 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     kinematics = Kinematics()
 
     # -------------------- Obstacles --------------------
-    all_obstacles = np.array(fill_env_with_obstacles(env, 'video',1))
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'arm',1))
 
     # target_position_temp = np.array([5.80310599e-01, 6.08140775e-07, 6.89718851e-01])
     target_positions_arm = [(0, 0.55, 0.6), (0.2,0,0.65)]

@@ -11,10 +11,10 @@ from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDri
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 import icecream as ic   
  
-from create_environments import fill_env_with_obstacles
+from environments.create_environments import fill_env_with_obstacles
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from global_path.RRT_global import RRTStar
+from global_path.RRT_global import RRTStar, InformedRRTStar
 from mobile_base.pid_control import PIDBase, path_smoother, interpolate_path
 
 
@@ -72,26 +72,30 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     action = np.zeros(env.n())
     for stp in range(10):
         ob, *_ = env.step(action)
+        current_joint_angles = np.array(ob['robot_0']['joint_state']['position'][3:10])
 
-    rrt = RRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],
+    rrt_informed = InformedRRTStar(config_start=ob['robot_0']['joint_state']['position'][0:3],
                   obstacles=all_obstacles, iter_max=500, 
                   config_goal=goal_pos, step_len=1,
                   sampling_range=10, rewire_radius=2)
-    rrt.planning()
-    path_to_goal = np.array(rrt.find_path())
+    rrt_informed.planning()
+    
+    path_to_goal = np.array(rrt_informed.find_path())
     
 
-    # total_cost_path = sum(rrt.cost.values())
-    total_cost_path = rrt.calculate_path_cost(path_to_goal)
+    # total_cost_path = sum(rrt_informed.cost.values())
+    total_cost_path = rrt_informed.calculate_path_cost(path_to_goal)
     
     if len(path_to_goal) > 3:
+
         interpolated_path = interpolate_path(path_to_goal, max_dist=4.0)
         path_to_goal_smooth = path_smoother(interpolated_path, total_cost_path=total_cost_path)
-        rrt.visualize_path(path_to_goal[:,0,:])
-        rrt.visualize_path(path_to_goal_smooth, spline=True)
+        rrt_informed.visualize_path(path_to_goal[:,0,:], color = [1,0,0])
+        rrt_informed.visualize_path(path_to_goal_smooth, spline=True)
 
         # Make path_to_goal sparse (every 10th point) while keeping the last point
         path_to_goal_sparse = path_to_goal_smooth[::20]
+        
         path_to_goal_sparse[-1] = path_to_goal_smooth[-1]
         final_path = path_to_goal_sparse
         pid_controller = PIDBase(kp=[1, 0.75], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
@@ -101,14 +105,12 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
         final_path = path_to_goal[:,0,:]
         print("Final path: ", path_to_goal)
         print(final_path)
-        rrt.visualize_path(final_path)
+        rrt_informed.visualize_path(final_path)
         pid_controller = PIDBase(kp=[1, 2], ki=[0.0, 0.0], kd=[0.01, 0.01], dt=0.01)
 
 
     ###/RRT####
 
-
-    print(f"Initial observation : {ob}")
     linear_actions = []  # List to store action[0] values
     linear_errors = []
     final_reach_sent = False
@@ -117,6 +119,12 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
 
     prev_action = np.zeros(env.n())
 
+
+    plt.plot(rrt_informed.all_path_costs)
+    plt.xlabel('Number of Paths Found')
+    plt.ylabel('Path Cost')
+    plt.title('Path Costs Over Iterations')
+    plt.show()
 
 
     for step in range(n_steps):
