@@ -74,17 +74,25 @@ When running the scripts, they will render a simulation environment that allows 
 
 ### Arm Path Planning Visualization
 
-<p float="left">
-  <img src="images/arm_first_target.png" alt="Arm Path Planning (First Target)" width="45%" />
-  <img src="images/arm_second_target.png" alt="Arm Path Planning (Second Target)" width="45%" /> 
-</p>
+<div style="text-align: center;">
+  <img src="images/arm_first_target.png" alt="Arm Path Planning (First Target)" style="width: 100%; object-fit: contain;" />
+  <p>Arm Path Planning (First Target)</p>
+</div>
+<div style="text-align: center;">
+  <img src="images/arm_second_target.png" alt="Arm Path Planning (Second Target)" style="width: 100%; object-fit: contain;" />
+  <p>Arm Path Planning (Second Target)</p>
+</div>
 
 ### Base Navigation Visualization
 
-<p float="left">
-  <img src="images/base_top.png" alt="Base Navigation (Topview)" width="45%" />
-  <img src="images/base_side.png" alt="Base Navigation (Sideview)" width="45%" />
-</p>
+<div style="text-align: center;">
+  <img src="images/base_top.png" alt="Base Navigation (Topview)" style="width: 100%; object-fit: contain;" />
+  <p>Base Navigation (Topview)</p>
+</div>
+<div style="text-align: center;">
+  <img src="images/base_side.png" alt="Base Navigation (Sideview)" style="width: 100%; object-fit: contain;" />
+  <p>Base Navigation (Sideview)</p>
+</div>
 
 ## Authors
 - Jakob Bichler
