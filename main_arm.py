@@ -150,6 +150,8 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
                 control_action[2:9] = joint_space_action
                 ob, *_ = env.step(control_action)
                 history.append(ob)
+            else:
+                break
 
     env.close()
     return history

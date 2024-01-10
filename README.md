@@ -41,16 +41,16 @@ Before proceeding, ensure that you have Conda installed on your system. If you d
 2. **Create the Environment**: Run the following command to create the Conda environment:
 
    ```bash
-   conda env create -f conda_env_group20.yml
+   python3 -m venv pdm_project_20
+   source pdm_project_20/bin/activate
+   cd PDM_project
+   pip install --upgrade pip
+   pip install -r requirements.txt
     ```
 
 3. **Open Terminal or Command Prompt**: Navigate to the directory where the `conda_env_group20.yml` file is located.
 
 4. **Activate the Environment**: Run the following command to activate the Conda environment:
-
-   ```bash
-   conda activate PDM
-   ```
 
 
 ## Usage
