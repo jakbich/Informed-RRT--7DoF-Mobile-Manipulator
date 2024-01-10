@@ -45,7 +45,10 @@ Before proceeding, ensure that you have Conda installed on your system. If you d
    source pdm_project_20/bin/activate
    cd PDM_project
    pip install --upgrade pip
-   pip install -r requirements.txt
+   pip install gymnasium
+   pip install pybullet
+   pip install urdfenvs 
+   pip install tqdm
     ```
 
    - `python3 -m venv pdm_project_20`: Creates a new virtual environment named `pdm_project_20`.
@@ -53,8 +56,6 @@ Before proceeding, ensure that you have Conda installed on your system. If you d
    - `source pdm_project_20/bin/activate`: Activates the newly created virtual environment.
 
    - `pip install --upgrade pip`: Upgrades pip in the virtual environment. Essential for the urdfenvs package
-
-   - `pip install -r requirements.txt`: Installs all the Python dependencies listed in the `requirements.txt` file. 
 
 ## Usage
 To run the autonomous robot simulation, execute the main scripts provided for different sections of the robot:
