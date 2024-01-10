@@ -1,4 +1,4 @@
-#code based on https://gist.github.com/mlaves/a60cbc5541bd6c9974358fbaad9e4c51 (thank you very much)
+#code based on https://gist.github.com/mlaves/a60cbc5541bd6c9974358fbaad9e4c51
 
 from sympy import symbols, cos, sin, pi, Matrix, eye, lambdify
 import numpy as np
