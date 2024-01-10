@@ -38,7 +38,7 @@ Before proceeding, ensure that you have Conda installed on your system. If you d
    git clone git@github.com:Hobsyllvin/PDM_project.git
     ```
 
-2. **Create the Environment**: Run the following command to create the Conda environment:
+2. **Create the Environment**: Run the following command to create the python virtual environment:
 
    ```bash
    python3 -m venv pdm_project_20
@@ -48,10 +48,13 @@ Before proceeding, ensure that you have Conda installed on your system. If you d
    pip install -r requirements.txt
     ```
 
-3. **Open Terminal or Command Prompt**: Navigate to the directory where the `conda_env_group20.yml` file is located.
+   - `python3 -m venv pdm_project_20`: Creates a new virtual environment named `pdm_project_20`.
 
-4. **Activate the Environment**: Run the following command to activate the Conda environment:
+   - `source pdm_project_20/bin/activate`: Activates the newly created virtual environment.
 
+   - `pip install --upgrade pip`: Upgrades pip in the virtual environment. Essential for the urdfenvs package
+
+   - `pip install -r requirements.txt`: Installs all the Python dependencies listed in the `requirements.txt` file. 
 
 ## Usage
 To run the autonomous robot simulation, execute the main scripts provided for different sections of the robot:
