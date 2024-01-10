@@ -1,4 +1,4 @@
-#code based on https://gist.github.com/mlaves/a60cbc5541bd6c9974358fbaad9e4c51 (thank you very much)
+#code based on https://gist.github.com/mlaves/a60cbc5541bd6c9974358fbaad9e4c51
 
 # Starting position of the end effector: 5.80310599e-01, 6.08140775e-07, 6.89718851e-01
 
