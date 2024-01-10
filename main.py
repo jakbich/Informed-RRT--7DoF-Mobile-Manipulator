@@ -7,9 +7,9 @@ import os
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from full_robot_model.ab_control import ArmControl
+from full_robot_model.control_arm_on_albert import ArmControl
 from full_robot_model.ab_kinematics import Kinematics
-from full_robot_model.ab_operate import drop_arm, goal_reached
+from full_robot_model.operate_arm_on_albert import drop_arm, goal_reached
 
 from global_path.RRT_global import RRTStar, InformedRRTStar
 from mobile_base.pid_control import PIDBase, path_smoother, interpolate_path

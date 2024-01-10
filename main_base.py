@@ -9,7 +9,6 @@ import pybullet as p
 import matplotlib.pyplot as plt
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-import icecream as ic   
  
 from environments.create_environments import fill_env_with_obstacles
 
