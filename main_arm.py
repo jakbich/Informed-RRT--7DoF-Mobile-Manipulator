@@ -8,7 +8,7 @@ from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDri
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from full_robot_model.control_arm_on_albert import ArmControl
-from full_robot_model.ab_kinematics import Kinematics
+from full_robot_model.kinematics_arm_on_albert import Kinematics
 
 from global_path.RRT_global import RRTStar
 from mobile_base.pid_control import PIDBase, path_smoother, interpolate_path
@@ -150,8 +150,6 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
                 control_action[2:9] = joint_space_action
                 ob, *_ = env.step(control_action)
                 history.append(ob)
-            else:
-                break
 
     env.close()
     return history

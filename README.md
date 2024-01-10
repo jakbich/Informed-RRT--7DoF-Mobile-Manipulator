@@ -12,20 +12,19 @@ PROJECT/
 ├── environments/
 │   └── create_environments.py
 ├── full_robot_model/
-│   ├── ab_control.py
-│   ├── ab_kinematics.py
-│   ├── ab_operate.py
-│   └── main_ab.py
+│   ├── control_arm_on_albert.py
+│   ├── kinematics_arm_on_albert.py
+│   └── operate_arm_on_albert.py
 ├── global_path/
 │   └── RRT_global.py
+├── images/
 ├── mobile_base/
 │   └── pid_control.py
-├── path_planning/
-│   └── RRT_global.py
 ├── main_arm.py
 ├── main_base.py
 ├── main.py
 └── README.md
+
 ```
 
 ## Installation

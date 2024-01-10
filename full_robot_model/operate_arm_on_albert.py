@@ -4,8 +4,8 @@ import numpy as np
 import pybullet as p
 from urdfenvs.robots.generic_urdf.generic_diff_drive_robot import GenericDiffDriveRobot
 from urdfenvs.urdf_common.urdf_env import UrdfEnv
-from .ab_control import ArmControl
-from .ab_kinematics import Kinematics
+from .control_arm_on_albert import ArmControl
+from .kinematics_arm_on_albert import Kinematics
 
 def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
     robots = [
