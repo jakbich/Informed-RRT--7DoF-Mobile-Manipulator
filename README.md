@@ -29,8 +29,6 @@ PROJECT/
 ```
 
 ## Installation
-Before running the scripts, ensure the following dependencies are installed:
-
 Before proceeding, ensure that you have Conda installed on your system. If you do not have Conda installed, you can download and install it from [Miniconda](https://docs.conda.io/en/latest/miniconda.html) or [Anaconda](https://www.anaconda.com/products/individual).
 
 
