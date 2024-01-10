@@ -328,7 +328,7 @@ class InformedRRTStar (RRTStar):
         """
         paths_found = 0
 
-        for _ in tqdm(range(400)):
+        for _ in tqdm(range(1)):
             new_node = self.sample_new_node_ellipsoid()
             if new_node is not None:
                 nearby_nodes = self.find_nearby_nodes(new_node, self.rewire_radius)
@@ -428,14 +428,21 @@ class InformedRRTStar (RRTStar):
 
     def adjust_ellipsoid(self):
         # Inside calculate_ellipsoid method
-        counter_in_elipse = 0
-        while counter_in_elipse < len(self.path_to_goal) and counter_in_elipse < 50:
+        counter_adjusted = 0
+        while True:
             counter_in_elipse = 0
             for i in range(len(self.path_to_goal)):
                 if not self.is_point_in_ellipse(self.path_to_goal[i][0][0], self.path_to_goal[i][0][1], self.distance_start_goal, self.width_ellipse, self.config_start, self.direction_vector):
                     self.width_ellipse *= 1.1
+                    counter_adjusted += 1
+                    break  # Break the inner loop if an adjustment is made
                 else:
                     counter_in_elipse += 1
-                    print(counter_in_elipse)
 
-        
+            # Check if the maximum number of adjustments has been reached
+            if counter_adjusted >= 20:
+                break  # Break the outer loop if max adjustments reached
+
+            # Check if all points are inside the ellipse
+            if counter_in_elipse == len(self.path_to_goal):
+                break  # Break the outer loop if all points are inside

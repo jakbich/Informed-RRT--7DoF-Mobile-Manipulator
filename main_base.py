@@ -53,19 +53,19 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     
 
     # Filling with obstacles and creating the list with al spheres [x,y,z,radius]
-    all_obstacles = np.array(fill_env_with_obstacles(env, 'advanced',1))
+    all_obstacles = np.array(fill_env_with_obstacles(env, 'easy',1))
 
-    ####RRT#####
+    # ####RRT#####
 
     history = []
 
-    # Goal for medium env (1.5,-4.5,0)
-    goal_pos = (1.5,-4.5, 0)
+    #goal_pos = (1.5,-2, 0) # for easy env
+    goal_pos = (1.5,-4.5, 0) # for medium and video env
+    #goal_pos = (5,1, 0) # for hard env
 
-    # PLottin the goal
+    # Plottin the goal
     visual_shape_goal = p.createVisualShape(shapeType=p.GEOM_SPHERE, radius=0.1, rgbaColor=[0, 1, 0, 1])
     p.createMultiBody(baseMass=0, baseVisualShapeIndex=visual_shape_goal, basePosition=goal_pos)
-    
 
 
     # Initial action to get initial observation
@@ -121,6 +121,7 @@ def run_albert(n_steps=100000, render=False, goal=True, obstacles=True, env_type
     # plt.title('Path Costs Over Iterations')
     # plt.show()
 
+    print ("Path cost is: ", total_cost_path)
 
     for step in range(n_steps):
 

@@ -92,16 +92,20 @@ def run_albert(n_steps=10000, render=False, goal=True, obstacles=True):
         arm_reach = 0.8    
 
 
+        # Create RRTStar object
         rrt = RRTStar(config_start=current_end_position,
                 obstacles=all_obstacles, iter_max=500, 
                 config_goal=target_position, step_len=0.01,
                 sampling_range=arm_reach, rewire_radius=0.4, arm=True)
         
+        # Plan path
         rrt.planning()
         path_to_goal = np.array(rrt.find_path())
+
+        
         total_cost_path = rrt.calculate_path_cost(path_to_goal)
         
-        
+        # If path is longer than 3 points, interpolate and smooth it
         if len(path_to_goal) > 3:
             interpolated_path = interpolate_path(path_to_goal, max_dist=4.0)
             path_to_goal_smooth = path_smoother(interpolated_path, total_cost_path=total_cost_path)
