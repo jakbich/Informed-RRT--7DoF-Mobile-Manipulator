@@ -328,7 +328,7 @@ class InformedRRTStar (RRTStar):
         """
         paths_found = 0
 
-        for _ in tqdm(range(1)):
+        for _ in tqdm(range(200)):
             new_node = self.sample_new_node_ellipsoid()
             if new_node is not None:
                 nearby_nodes = self.find_nearby_nodes(new_node, self.rewire_radius)
@@ -427,7 +427,6 @@ class InformedRRTStar (RRTStar):
 
 
     def adjust_ellipsoid(self):
-        # Inside calculate_ellipsoid method
         counter_adjusted = 0
         while True:
             counter_in_elipse = 0

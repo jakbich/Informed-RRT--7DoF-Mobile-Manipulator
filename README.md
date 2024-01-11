@@ -1,11 +1,13 @@
 # Autonomous Warehouse Robot
-The robotic system is designed to operate within a warehouse environment. The robot, named Albert, is capable of autonomous navigation. The repository is structured to separate the functionalities of the arm control, base movement, environment setup, and the full robot model.
+Mobile manipulators find extensive applications, such as serving as picking agents in logistics centers for delivery services. This paper introduces the implementation of two random sampling algorithms—RRT* and informed RRT*—enabling the robot to manipulate its arm to retrieve items from a box and navigate a 2D environment to reach a predefined goal point, all while avoiding static obstacles. We conduct a comparative analysis, highlighting the superior performance of informed RRT* over RRT* in various environments and assessing the impact of specific hyperparameters.
 
+
+[Link to video](https://www.youtube.com/watch?v=VViC1GyVnd4&feature=youtu.be)
 ## Repository Structure
 
 ```plaintext
 PROJECT/
-├── arm_model/
+├── arm_model/1
 │   ├── control_arm.py
 │   ├── kinematics_arm.py
 │   └── operate_arm.py
