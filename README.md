@@ -1,4 +1,4 @@
-# Autonomous Warehouse Robot
+# Informed RRT* algorithm on a mobile manipulator in simulation
 Mobile manipulators find extensive applications, such as serving as picking agents in logistics centers for delivery services. This paper introduces the implementation of two random sampling algorithms—RRT* and informed RRT*—enabling the robot to manipulate its arm to retrieve items from a box and navigate a 2D environment to reach a predefined goal point, all while avoiding static obstacles. We conduct a comparative analysis, highlighting the superior performance of informed RRT* over RRT* in various environments and assessing the impact of specific hyperparameters.
 
 
