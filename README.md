@@ -36,8 +36,7 @@ Before proceeding, ensure that you have Conda installed on your system. If you d
 1. Clone the repository:
 
    ```bash
-   git clone git@github.com:Hobsyllvin/PDM_project.git
-    ```
+    git@github.com:jakbich/Informed-RRT--7DoF-Mobile-Manipulator.git```
 
 2. **Create the Environment**: Run the following command to create the python virtual environment:
 
